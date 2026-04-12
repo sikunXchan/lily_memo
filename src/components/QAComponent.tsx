@@ -9,10 +9,32 @@ interface QAPair {
   checked?: boolean;
 }
 
+function hasJapanese(text: string): boolean {
+  return /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]/.test(text);
+}
+
 function parseNumberedText(text: string): string[] {
   // (?!\d) で小数点（27.5 など）を番号マーカーとして誤認識しないようにする
   const matches = Array.from(text.matchAll(/\d+[.．](?!\d)\s*([\s\S]*?)(?=\s*\d+[.．](?!\d)|$)/g));
-  return matches.map(m => m[1].trim()).filter(Boolean);
+  const items = matches.map(m => m[1].trim()).filter(Boolean);
+
+  // 「英語のみの項目」の直後に「日本語を含む項目」が来た場合のみ結合する
+  // 例: 1.English sentence  2.日本語訳  → 1つの問題としてまとめる
+  // ※両方日本語・両方英語の場合はマージしないため他のケースは影響なし
+  const result: string[] = [];
+  let i = 0;
+  while (i < items.length) {
+    const current = items[i];
+    const next = items[i + 1];
+    if (next !== undefined && !hasJapanese(current) && hasJapanese(next)) {
+      result.push(current + '\n' + next);
+      i += 2;
+    } else {
+      result.push(current);
+      i += 1;
+    }
+  }
+  return result;
 }
 
 export default function QAComponent({ node: { attrs }, updateAttributes }: any) {
