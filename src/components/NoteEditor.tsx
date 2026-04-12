@@ -405,16 +405,30 @@ export default function NoteEditor({ noteId, onClose }: NoteEditorProps) {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    input.onchange = async (e) => {
+    input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file || !editor) return;
       const { to } = editor.state.selection;
-      const reader = new FileReader();
-      reader.onload = () => {
-        const url = reader.result as string;
+      const objectUrl = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        const MAX = 1200;
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          if (width > height) { height = Math.round(height * MAX / width); width = MAX; }
+          else { width = Math.round(width * MAX / height); height = MAX; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        ctx.drawImage(img, 0, 0, width, height);
+        const url = canvas.toDataURL('image/jpeg', 0.75);
         editor.chain().insertContentAt(to, { type: 'image', attrs: { src: url } }).run();
       };
-      reader.readAsDataURL(file);
+      img.src = objectUrl;
     };
     input.click();
   };
