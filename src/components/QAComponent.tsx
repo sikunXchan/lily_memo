@@ -11,7 +11,8 @@ interface QAPair {
 
 function parseNumberedText(text: string): string[] {
   // 番号（1. 2. など）に続くテキストだけを抽出。ヘッダー・空白行は無視
-  const matches = Array.from(text.matchAll(/\d+[.．]\s*([\s\S]*?)(?=\s*\d+[.．]|$)/g));
+  // (?!\d) で小数点（3.5 など）を番号マーカーとして誤認識しないようにする
+  const matches = Array.from(text.matchAll(/\d+[.．](?!\d)\s*([\s\S]*?)(?=\s*\d+[.．](?!\d)|$)/g));
   return matches
     .map(m => m[1].trim())
     .filter(Boolean);
