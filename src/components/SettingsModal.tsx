@@ -89,9 +89,12 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
       <style jsx>{`
         .settings-view {
           padding: 32px;
+          padding-left: max(32px, env(safe-area-inset-left));
+          padding-right: max(32px, env(safe-area-inset-right));
           flex: 1;
           min-height: 0;
           overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
           background: var(--background);
         }
         .settings-header {
@@ -177,6 +180,8 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
         @media (max-width: 768px) {
           .settings-view {
             padding: 24px 16px;
+            padding-left: max(16px, env(safe-area-inset-left));
+            padding-right: max(16px, env(safe-area-inset-right));
           }
           .settings-header h2 {
             font-size: 1.5rem;

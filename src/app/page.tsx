@@ -69,13 +69,6 @@ export default function Home() {
       )}
 
       <main className="main-view">
-        {/* Settings renders as a full-screen overlay on all devices */}
-        {activeTab === 'settings' && (
-          <div className="settings-overlay">
-            <SettingsModal onClose={() => setActiveTab('memos')} />
-          </div>
-        )}
-
         {activeTab !== 'settings' && (
           activeNoteId ? (
             <NoteEditor
@@ -110,6 +103,13 @@ export default function Home() {
           )
         )}
       </main>
+
+      {/* Settings overlay: rendered at app-container level to avoid iOS overflow:hidden clipping */}
+      {activeTab === 'settings' && (
+        <div className="settings-overlay">
+          <SettingsModal onClose={() => setActiveTab('memos')} />
+        </div>
+      )}
 
       {isMobile && !isInputFocused && !activeNoteId && (
         <nav className="bottom-nav">
@@ -147,7 +147,7 @@ export default function Home() {
         }
 
         .settings-overlay {
-          position: fixed;
+          position: absolute;
           top: 0;
           left: 0;
           right: 0;
