@@ -5,10 +5,11 @@ import Sidebar from '@/components/Sidebar';
 import NoteEditor from '@/components/NoteEditor';
 import SettingsModal from '@/components/SettingsModal';
 import PDFViewer from '@/components/PDFViewer';
+import ScribbleBoard from '@/components/ScribbleBoard';
 import { initSync } from '@/lib/sync';
-import { Book, Settings as SettingsIcon, FileText } from 'lucide-react';
+import { Book, Settings as SettingsIcon, FileText, Pencil } from 'lucide-react';
 
-type TabType = 'memos' | 'pdf' | 'settings';
+type TabType = 'memos' | 'pdf' | 'scribble' | 'settings';
 
 export default function Home() {
   const [activeNoteId, setActiveNoteId] = useState<number | undefined>();
@@ -70,6 +71,11 @@ export default function Home() {
     setActiveNoteId(undefined);
   };
 
+  const openScribble = () => {
+    setActiveTab('scribble');
+    setActiveNoteId(undefined);
+  };
+
   return (
     <div className={`app-container ${isMobile && !isLandscape ? 'mobile-mode' : ''} ${isLandscape && isDesktopLayout ? 'landscape-mode' : ''} ${isDesktopLayout ? 'desktop-sidebar' : ''} ${isMobile && isLandscape && !!activeNoteId ? 'mobile-landscape-note' : ''}`}>
       {isDesktopLayout && (
@@ -78,6 +84,7 @@ export default function Home() {
           onSelectNote={(id) => { setActiveNoteId(id); setActiveTab('memos'); }}
           onOpenSettings={openSettings}
           onOpenPDF={openPDF}
+          onOpenScribble={openScribble}
           isMobileOpen={false}
           onToggleMobile={() => {}}
         />
@@ -104,12 +111,16 @@ export default function Home() {
                     onSelectNote={setActiveNoteId}
                     onOpenSettings={openSettings}
                     onOpenPDF={openPDF}
+                    onOpenScribble={openScribble}
                     isMobileOpen={true}
                     onToggleMobile={() => {}}
                   />
                 )}
                 {activeTab === 'pdf' && (
                   <PDFViewer />
+                )}
+                {activeTab === 'scribble' && (
+                  <ScribbleBoard />
                 )}
                 {isDesktopLayout && activeTab === 'memos' && (
                   <div className="empty-state">
@@ -135,6 +146,10 @@ export default function Home() {
           <button className={`nav-item ${activeTab === 'pdf' ? 'active' : ''}`} onClick={() => { setActiveTab('pdf'); setActiveNoteId(undefined); }}>
             <FileText size={24} />
             <span>PDF</span>
+          </button>
+          <button className={`nav-item ${activeTab === 'scribble' ? 'active' : ''}`} onClick={() => { setActiveTab('scribble'); setActiveNoteId(undefined); }}>
+            <Pencil size={24} />
+            <span>落書き</span>
           </button>
           <button className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => { setActiveTab('settings'); setActiveNoteId(undefined); }}>
             <SettingsIcon size={24} />

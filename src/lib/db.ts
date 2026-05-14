@@ -73,10 +73,23 @@ export interface ImageAsset {
   type: string;
 }
 
+export interface ScribbleStroke {
+  points: { x: number; y: number }[];
+  color: string;
+  width: number;
+}
+
+export interface ScribbleDoc {
+  id?: number;
+  strokes: ScribbleStroke[];
+  updatedAt: number;
+}
+
 export class LilyDatabase extends Dexie {
   folders!: Table<Folder>;
   notes!: Table<Note>;
   images!: Table<ImageAsset>;
+  scribbles!: Table<ScribbleDoc>;
 
   constructor() {
     super('LilyDatabase');
@@ -117,6 +130,11 @@ export class LilyDatabase extends Dexie {
       await tx.table('notes').toCollection().modify((n: any) => {
         if (!n.syncId) n.syncId = newSyncId();
       });
+    });
+    this.version(8).stores({
+      notes: '++id, syncId, title, folderId, color, createdAt, updatedAt, type, deletedAt',
+      folders: '++id, syncId, name, parentId, color, createdAt, updatedAt, deletedAt',
+      scribbles: '++id, updatedAt',
     });
   }
 }

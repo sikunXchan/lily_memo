@@ -88,17 +88,22 @@ export default function DirectoryGraph({ folders, notes, activeNoteId, onSelectN
     return () => ro.disconnect();
   }, []);
 
-  // Tighten the simulation — bring nodes closer together
+  // Tighten the simulation — bring nodes closer together.
+  // On small viewports (phones) the available area is tiny, so use even
+  // smaller link distance & gentler repulsion to keep nodes from spilling
+  // out of view, and we rely on zoomToFit (below) to frame everything.
   useEffect(() => {
     const fg = fgRef.current;
     if (!fg) return;
+    const minDim = Math.min(size.width, size.height);
+    const compact = minDim < 380;
     const linkForce = fg.d3Force('link');
     const chargeForce = fg.d3Force('charge');
-    if (linkForce) linkForce.distance(22).strength(0.9);
-    if (chargeForce) chargeForce.strength(-35).distanceMax(160);
+    if (linkForce) linkForce.distance(compact ? 14 : 22).strength(0.9);
+    if (chargeForce) chargeForce.strength(compact ? -18 : -35).distanceMax(compact ? 90 : 160);
     fg.d3VelocityDecay(0.45);
     fg.d3ReheatSimulation();
-  }, [folders.length, notes.length]);
+  }, [folders.length, notes.length, size.width, size.height]);
 
   const graphData = useMemo(() => {
     const nodes: GraphNode[] = [];
@@ -160,6 +165,12 @@ export default function DirectoryGraph({ folders, notes, activeNoteId, onSelectN
         linkColor={() => linkColor}
         linkWidth={0.6}
         enableNodeDrag={true}
+        onEngineStop={() => {
+          // After the simulation settles, frame the whole graph in view
+          // so phones (where the viewport is small) don't show a chaotic
+          // half-cropped layout.
+          fgRef.current?.zoomToFit(400, 24);
+        }}
         onRenderFramePre={(ctx) => {
           // Paint twinkling stars in graph coordinate space (nope — this fires after transforms).
           // We draw in canvas pixel space using identity transform for backdrop.

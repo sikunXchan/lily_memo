@@ -1,9 +1,9 @@
 'use client';
 
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, EMPTY_HANDWRITING, serializeHandwriting, newSyncId } from '@/lib/db';
+import { db, newSyncId } from '@/lib/db';
 import { markDirty } from '@/lib/sync';
-import { FolderIcon, FileText, Plus, ChevronRight, ChevronDown, FolderPlus, Palette, Sun, Moon, Search, Settings, List, Sparkles, Type as TypeIcon, Pencil } from 'lucide-react';
+import { FolderIcon, FileText, Plus, ChevronRight, ChevronDown, FolderPlus, Palette, Sun, Moon, Search, Settings, List, Sparkles, Pencil } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import DirectoryGraph from './DirectoryGraph';
@@ -13,6 +13,7 @@ interface SidebarProps {
   onSelectNote: (id: number) => void;
   onOpenSettings: () => void;
   onOpenPDF?: () => void;
+  onOpenScribble?: () => void;
   isMobileOpen: boolean;
   onToggleMobile: () => void;
 }
@@ -25,7 +26,7 @@ const COLORS = [
   { name: 'Purple', value: '--folder-purple' },
 ];
 
-export default function Sidebar({ activeNoteId, onSelectNote, onOpenSettings, onOpenPDF, isMobileOpen, onToggleMobile }: SidebarProps) {
+export default function Sidebar({ activeNoteId, onSelectNote, onOpenSettings, onOpenPDF, onOpenScribble, isMobileOpen, onToggleMobile }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   
   const folders = useLiveQuery(() =>
@@ -43,7 +44,6 @@ export default function Sidebar({ activeNoteId, onSelectNote, onOpenSettings, on
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [editingFolderColor, setEditingFolderColor] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'tree' | 'graph'>('tree');
-  const [showAddMenu, setShowAddMenu] = useState<{ folderId?: number } | null>(null);
 
   useEffect(() => {
     const restoreViewMode = () => {
@@ -105,16 +105,15 @@ export default function Sidebar({ activeNoteId, onSelectNote, onOpenSettings, on
     setEditingFolderColor(null);
   };
 
-  const addNote = async (folderId?: number, type: 'text' | 'handwriting' = 'text') => {
-    const initialContent = type === 'handwriting' ? serializeHandwriting(EMPTY_HANDWRITING) : '';
+  const addNote = async (folderId?: number) => {
     const now = Date.now();
     const syncId = newSyncId();
     const id = await db.notes.add({
       syncId,
-      title: type === 'handwriting' ? '無題の手書きメモ' : '無題のメモ',
-      content: initialContent,
+      title: '無題のメモ',
+      content: '',
       folderId,
-      type,
+      type: 'text',
       createdAt: now,
       updatedAt: now
     });
@@ -124,14 +123,6 @@ export default function Sidebar({ activeNoteId, onSelectNote, onOpenSettings, on
       setExpandedFolders(prev => ({ ...prev, [folderId]: true }));
     }
     if (window.innerWidth <= 768) onToggleMobile();
-  };
-
-  const openAddMenu = (folderId?: number) => setShowAddMenu({ folderId });
-  const closeAddMenu = () => setShowAddMenu(null);
-  const handleAddSelect = async (type: 'text' | 'handwriting') => {
-    const folderId = showAddMenu?.folderId;
-    closeAddMenu();
-    await addNote(folderId, type);
   };
 
   return (
@@ -157,7 +148,7 @@ export default function Sidebar({ activeNoteId, onSelectNote, onOpenSettings, on
         </div>
 
         <div className="sidebar-actions">
-          <button className="btn-add" onClick={() => openAddMenu()}>
+          <button className="btn-add" onClick={() => addNote()}>
             <Plus size={18} />
             <span>新しいメモ</span>
           </button>
@@ -209,7 +200,7 @@ export default function Sidebar({ activeNoteId, onSelectNote, onOpenSettings, on
                     <button className="btn-inline" onClick={(e) => { e.stopPropagation(); setEditingFolderColor(editingFolderColor === folder.id ? null : folder.id!); }}>
                       <Palette size={14} />
                     </button>
-                    <button className="btn-inline" onClick={(e) => { e.stopPropagation(); openAddMenu(folder.id); }}>
+                    <button className="btn-inline" onClick={(e) => { e.stopPropagation(); addNote(folder.id); }}>
                       <Plus size={14} />
                     </button>
                   </div>
@@ -265,34 +256,17 @@ export default function Sidebar({ activeNoteId, onSelectNote, onOpenSettings, on
           )}
         </div>
 
-        {showAddMenu && (
-          <div className="add-menu-overlay" onClick={closeAddMenu}>
-            <div className="add-menu-sheet" onClick={e => e.stopPropagation()}>
-              <div className="add-menu-title">新しいメモの種類を選択</div>
-              <button className="add-menu-item" onClick={() => handleAddSelect('text')}>
-                <TypeIcon size={20} />
-                <div>
-                  <div className="add-menu-item-title">テキストメモ</div>
-                  <div className="add-menu-item-desc">通常のリッチテキスト編集</div>
-                </div>
-              </button>
-              <button className="add-menu-item" onClick={() => handleAddSelect('handwriting')}>
-                <Pencil size={20} />
-                <div>
-                  <div className="add-menu-item-title">手書きメモ</div>
-                  <div className="add-menu-item-desc">指やペンで描く</div>
-                </div>
-              </button>
-              <button className="add-menu-cancel" onClick={closeAddMenu}>キャンセル</button>
-            </div>
-          </div>
-        )}
-
         <div className="sidebar-footer">
           {onOpenPDF && (
             <button className="btn-settings" onClick={onOpenPDF}>
               <FileText size={20} />
               <span>PDF</span>
+            </button>
+          )}
+          {onOpenScribble && (
+            <button className="btn-settings" onClick={onOpenScribble}>
+              <Pencil size={20} />
+              <span>落書き</span>
             </button>
           )}
           <button className="btn-settings" onClick={onOpenSettings}>
