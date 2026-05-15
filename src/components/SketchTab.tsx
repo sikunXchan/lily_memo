@@ -849,19 +849,40 @@ export default function SketchTab({ onClose }: SketchTabProps) {
           color: #ddd;
         }
 
+        /* Divider: visually a thin line, but the hit area is 18px so
+           it's actually draggable with a finger. The ::before is the
+           visible line; ::after is the centered pill grabber. */
         .sketch-divider {
-          background: var(--border);
+          background: transparent;
           flex-shrink: 0;
           touch-action: none;
           position: relative;
+          z-index: 5;
         }
         .split-left .sketch-divider {
-          width: 10px;
+          width: 18px;
           cursor: col-resize;
         }
         .split-top .sketch-divider {
-          height: 10px;
+          height: 18px;
           cursor: row-resize;
+        }
+        .sketch-divider::before {
+          content: '';
+          position: absolute;
+          background: var(--border);
+        }
+        .split-left .sketch-divider::before {
+          top: 0; bottom: 0;
+          left: 50%;
+          width: 2px;
+          transform: translateX(-50%);
+        }
+        .split-top .sketch-divider::before {
+          left: 0; right: 0;
+          top: 50%;
+          height: 2px;
+          transform: translateY(-50%);
         }
         .sketch-divider::after {
           content: '';
@@ -870,19 +891,20 @@ export default function SketchTab({ onClose }: SketchTabProps) {
           top: 50%;
           transform: translate(-50%, -50%);
           background: var(--primary);
-          border-radius: 2px;
-          opacity: 0.45;
+          border-radius: 3px;
+          opacity: 0.6;
         }
         .split-left .sketch-divider::after {
-          width: 3px;
-          height: 32px;
+          width: 4px;
+          height: 40px;
         }
         .split-top .sketch-divider::after {
-          width: 32px;
-          height: 3px;
+          width: 40px;
+          height: 4px;
         }
-        .sketch-divider:hover::after {
-          opacity: 0.9;
+        .sketch-divider:hover::after,
+        .sketch-divider:active::after {
+          opacity: 1;
         }
 
         .sketch-side {
@@ -891,16 +913,11 @@ export default function SketchTab({ onClose }: SketchTabProps) {
           min-width: 0;
           min-height: 0;
           background: var(--background);
-          /* Forces this element to become the containing block for any
-             position:fixed descendants (NoteEditor's editor-container /
-             editor-header use position:fixed on mobile). Without this,
-             those descendants escape to the viewport and cover the
-             whole sketch, breaking the split layout. */
-          transform: translateZ(0);
-          /* Belt-and-suspenders: even if a descendant uses position:fixed
-             with height:100dvh, clip it so it can't extend past the panel
-             and bleed into the sketch area below. */
-          overflow: hidden;
+          /* Containment is handled inside the embedded NoteEditor /
+             PDFViewer themselves (position:absolute;inset:0 in their
+             own roots) — adding transform/overflow here is what was
+             breaking pointer events on the sibling divider in some
+             browsers. */
         }
         .split-left .sketch-side {
           border-right: 1px solid var(--border);
