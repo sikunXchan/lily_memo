@@ -1228,10 +1228,10 @@ const SUGGESTIONS = [
 ];
 
 const SIKUNLILY_SUGGESTIONS = [
-  'このメモをプレゼン用スライドにして',
   '複数ファイルのコードプロジェクトを作って',
   'このドキュメントを分析してまとめて',
-  'スライドのテーマと構成を提案して',
+  'このデータのパターンと異常を検出して',
+  '情報源を比較してどちらが信頼できるか判断して',
 ];
 
 // Tone/style modes: tapping toggles the mode ON; while ON, every message
