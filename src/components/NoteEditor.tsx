@@ -214,10 +214,12 @@ export default function NoteEditor({ noteId, onClose, onSelectNote, embedded = f
     const handler = () => {
       if (!editor || !noteIdRef.current) return;
       const noteId = noteIdRef.current;
+      // 50ms 待ってから保存することで、ProseMirror トランザクションの
+      // コミットと React の再レンダリングが完了してから getHTML() を呼ぶ。
       setTimeout(() => {
         const content = editor.getHTML();
         db.notes.update(noteId, { content, updatedAt: Date.now() });
-      }, 0);
+      }, 50);
     };
     window.addEventListener('qa-checkbox-toggled', handler);
     return () => window.removeEventListener('qa-checkbox-toggled', handler);

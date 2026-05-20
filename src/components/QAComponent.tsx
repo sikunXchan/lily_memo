@@ -434,9 +434,23 @@ function CardStyles() {
   );
 }
 
-export default function QAComponent({ node: { attrs }, updateAttributes }: ReactNodeViewProps) {
+export default function QAComponent({ node, updateAttributes, editor, getPos }: ReactNodeViewProps) {
+  const attrs = node.attrs;
   const pairs: QAPair[] = attrs.pairs || [];
   const kind: string = attrs.kind || 'qa';
+
+  const dispatchPairs = (next: QAPair[]) => {
+    if (typeof getPos === 'function') {
+      const pos = getPos();
+      if (typeof pos === 'number') {
+        editor.view.dispatch(
+          editor.view.state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, pairs: next })
+        );
+        return;
+      }
+    }
+    updateAttributes({ pairs: next });
+  };
   const kindLabel = KIND_LABEL[kind] || 'Q&A';
   const [isEditing, setIsEditing] = useState(pairs.length === 0);
   const [qText, setQText] = useState('');
@@ -451,7 +465,7 @@ export default function QAComponent({ node: { attrs }, updateAttributes }: React
       a: answers[i] ?? '',
     }));
     if (newPairs.length === 0) return;
-    updateAttributes({ pairs: newPairs });
+    dispatchPairs(newPairs);
     setIsEditing(false);
     setRevealAll(false);
   };
@@ -617,7 +631,7 @@ export default function QAComponent({ node: { attrs }, updateAttributes }: React
                 const next = pairs.map((p, j) =>
                   j === i ? { ...p, checked: !p.checked } : p
                 );
-                updateAttributes({ pairs: next });
+                dispatchPairs(next);
                 window.dispatchEvent(new CustomEvent('qa-checkbox-toggled'));
               }}
             />
