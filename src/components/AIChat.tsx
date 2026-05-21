@@ -702,48 +702,59 @@ function ImageSaveBar({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Characters that break Mermaid mindmap parsing when unquoted.
-// Includes Rust-specific chars: < > & ' (lifetimes like 'a), :: handled via tab normalization
-const MERMAID_PROBLEM = /[()（）\[\]{}【】「」〔〕『』#&<>':]/;
+// Characters that break Mermaid mindmap parsing in plain-text node labels.
+// Note: () [] {} are Mermaid shape markers, so we only flag them in TEXT, not as structural markers.
+// Full-width brackets （）【】etc. are never shape markers so always flagged.
+const MERMAID_TEXT_PROBLEM = /[（）【】「」〔〕『』#&<>'|]/;
+// All problem chars including half-width () [] {} — used to detect if a plain-text node
+// (i.e. one with no shape markers) needs quoting.
+const MERMAID_PLAIN_PROBLEM = /[（）【】「」〔〕『』#&<>'|()[\]{}]/;
 
-// Sanitize mindmap code so nodes with special chars are safely quoted.
-// Also normalizes tab indentation → 2-space indentation.
+// Sanitize mindmap code:
+// 1. Normalize tab indentation → 2-space
+// 2. Quote node labels that contain characters Mermaid can't parse unquoted
+//
+// The tricky part: `root((text))` has shape markers (()) around the TEXT.
+// We must only quote the TEXT, never the shape markers themselves,
+// otherwise `"root((text))"` ends up with raw (( )) inside a quoted string
+// which confuses the Mermaid parser.
 function sanitizeMindmap(src: string): string {
   if (!/^\s*mindmap\b/.test(src)) return src;
-  // Normalize tab-based indentation: count tabs and convert to 2-space blocks
+
   const lines = src.split('\n');
-  const normalized = lines.map((line, idx) => {
-    if (idx === 0) return line;
-    // Count leading tabs and convert each to 2 spaces; leave spaces as-is
+
+  return lines.map((line, idx) => {
+    if (idx === 0) return line; // "mindmap" keyword
+
+    // Normalize tab indentation
     const tabMatch = line.match(/^(\t+)/);
     if (tabMatch) {
-      return '  '.repeat(tabMatch[1].length) + line.slice(tabMatch[1].length);
+      line = '  '.repeat(tabMatch[1].length) + line.slice(tabMatch[1].length);
+    }
+
+    const indent = line.match(/^(\s*)/)?.[1] ?? '';
+    const content = line.slice(indent.length);
+    if (!content.trim()) return line;
+    if (/^"/.test(content)) return line; // already quoted
+
+    // Match: optional ASCII id + shape open + text + shape close
+    // Examples: root((text)), ((text)), [text], node[text]
+    const shapeMatch = content.match(/^(\w*)([(\[{>]{1,2})([\s\S]+?)([)\]}]{1,2})$/);
+    if (shapeMatch) {
+      const [, id, , text, ] = shapeMatch;
+      // Only quote if the TEXT INSIDE the shape has problem chars
+      if (MERMAID_TEXT_PROBLEM.test(text)) {
+        return `${indent}${id}["${text.replace(/"/g, "'")}"]`;
+      }
+      return line; // shape markers are fine; text is clean
+    }
+
+    // Plain text node (no shape markers at start)
+    if (MERMAID_PLAIN_PROBLEM.test(content)) {
+      return `${indent}"${content.replace(/"/g, "'")}"`;
     }
     return line;
-  });
-  return normalized
-    .map((line, idx) => {
-      if (idx === 0) return line; // "mindmap" keyword line
-      const indent = line.match(/^(\s*)/)?.[1] ?? '';
-      const content = line.slice(indent.length);
-      if (!content.trim()) return line;
-      if (/^"/.test(content)) return line; // already quoted
-      // Shape node: ((text)), [text], (text), {{text}}, >text]
-      const shape = content.match(/^([(\[{>]{1,2})(.+?)([)\]}]{1,2})$/);
-      if (shape) {
-        const [, , inner] = shape;
-        if (MERMAID_PROBLEM.test(inner)) {
-          return `${indent}["${inner.replace(/"/g, "'")}"]`;
-        }
-        return line;
-      }
-      // Plain text label
-      if (MERMAID_PROBLEM.test(content)) {
-        return `${indent}"${content.replace(/"/g, "'")}"`;
-      }
-      return line;
-    })
-    .join('\n');
+  }).join('\n');
 }
 
 function MermaidPreview({ code, baseName }: { code: string; baseName: string }) {
