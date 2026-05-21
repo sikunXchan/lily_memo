@@ -703,16 +703,25 @@ function ImageSaveBar({ children }: { children: React.ReactNode }) {
 }
 
 // Characters that break Mermaid mindmap parsing when unquoted.
-const MERMAID_PROBLEM = /[()（）\[\]{}【】「」〔〕『』#&<>]/;
+// Includes Rust-specific chars: < > & ' (lifetimes like 'a), :: handled via tab normalization
+const MERMAID_PROBLEM = /[()（）\[\]{}【】「」〔〕『』#&<>':]/;
 
 // Sanitize mindmap code so nodes with special chars are safely quoted.
-// Shape nodes like ((text)) are converted to ["text"] when the inner
-// text contains problem characters, since quoting inside shape syntax
-// is not reliably supported across Mermaid versions.
+// Also normalizes tab indentation → 2-space indentation.
 function sanitizeMindmap(src: string): string {
   if (!/^\s*mindmap\b/.test(src)) return src;
-  return src
-    .split('\n')
+  // Normalize tab-based indentation: count tabs and convert to 2-space blocks
+  const lines = src.split('\n');
+  const normalized = lines.map((line, idx) => {
+    if (idx === 0) return line;
+    // Count leading tabs and convert each to 2 spaces; leave spaces as-is
+    const tabMatch = line.match(/^(\t+)/);
+    if (tabMatch) {
+      return '  '.repeat(tabMatch[1].length) + line.slice(tabMatch[1].length);
+    }
+    return line;
+  });
+  return normalized
     .map((line, idx) => {
       if (idx === 0) return line; // "mindmap" keyword line
       const indent = line.match(/^(\s*)/)?.[1] ?? '';
@@ -745,10 +754,14 @@ function MermaidPreview({ code, baseName }: { code: string; baseName: string }) 
     (async () => {
       const sanitized = sanitizeMindmap(code);
       try {
-        // Pre-validate to prevent Mermaid v11 from injecting a bomb SVG on error.
-        const ok = await (mermaid as unknown as { parse(t: string, o: object): Promise<boolean> })
-          .parse(sanitized, { suppressErrors: true });
-        if (!ok) { if (!cancelled) setErr(true); return; }
+        // For non-mindmap diagrams: pre-validate first to avoid Mermaid v11 broken-SVG injection.
+        // For mindmap: parse() is sometimes overly strict vs render(), so skip pre-check.
+        const isMindmap = /^\s*mindmap\b/.test(sanitized);
+        if (!isMindmap) {
+          const ok = await (mermaid as unknown as { parse(t: string, o: object): Promise<boolean> })
+            .parse(sanitized, { suppressErrors: true });
+          if (!ok) { if (!cancelled) setErr(true); return; }
+        }
         const id = `lily-mmd-${Math.random().toString(36).slice(2, 9)}`;
         const { svg: out } = await mermaid.render(id, sanitized);
         if (!cancelled) { setSvg(out); setErr(false); }
