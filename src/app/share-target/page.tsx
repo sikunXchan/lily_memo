@@ -10,7 +10,7 @@ function buildTitle(title: string, text: string, filename?: string): string {
   if (title.trim()) return title.trim();
   if (filename) return filename.replace(/\.[^.]+$/, '');
   const first = text.trim().split('\n')[0].slice(0, 50);
-  return first || '共有ノート';
+  return first || 'Shared note';
 }
 
 function buildContent(text: string, url: string): string {
@@ -122,20 +122,20 @@ function ShareTargetInner() {
       {phase === 'creating' && (
         <>
           <div className="spin" />
-          <p className="label">ノートを作成中…</p>
+          <p className="label">Creating note…</p>
         </>
       )}
       {phase === 'done' && (
         <>
           <div className="check">✓</div>
-          <p className="label done">追加しました</p>
+          <p className="label done">Added successfully</p>
           <p className="sub">{noteTitle}</p>
         </>
       )}
       {phase === 'error' && (
         <>
-          <p className="label">ノートの作成に失敗しました</p>
-          <button className="btn" onClick={() => router.replace('/')}>ホームへ</button>
+          <p className="label">Failed to create note</p>
+          <button className="btn" onClick={() => router.replace('/')}>Go Home</button>
         </>
       )}
 

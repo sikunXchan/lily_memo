@@ -284,7 +284,7 @@ export function renderGeometrySvg(spec: GeometrySpec): string {
         parts.push(`<path d="${segs.join(' ')}" stroke="${color}" stroke-width="2" fill="none"/>`);
         if (el.label) parts.push(`<text x="${W - pad}" y="${pad}" font-size="12" font-weight="600" fill="${color}" text-anchor="end">${esc(el.label)}</text>`);
       } catch {
-        parts.push(`<text x="${W / 2}" y="${H / 2}" font-size="12" fill="#cc0000" text-anchor="middle">式を解釈できなかったよ: ${esc(el.expr)}</text>`);
+        parts.push(`<text x="${W / 2}" y="${H / 2}" font-size="12" fill="#cc0000" text-anchor="middle">Could not parse expression: ${esc(el.expr)}</text>`);
       }
     } else if (el.type === 'text') {
       parts.push(`<text x="${X(el.x)}" y="${Y(el.y)}" font-size="13" font-weight="600" fill="${color}">${esc(el.text)}</text>`);
@@ -300,6 +300,6 @@ export function renderGeometrySvg(spec: GeometrySpec): string {
 
 export function parseGeometry(code: string): GeometrySpec {
   const spec = JSON.parse(code) as GeometrySpec;
-  if (!Array.isArray(spec.elements)) throw new Error('elements 配列がないよ');
+  if (!Array.isArray(spec.elements)) throw new Error('elements array is missing');
   return spec;
 }

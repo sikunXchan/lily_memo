@@ -100,22 +100,22 @@ function escHtmlAttr(s: string): string {
 }
 
 function detectMermaidLabel(code: string): string {
-  if (/sequenceDiagram/i.test(code)) return 'シーケンス図';
-  if (/classDiagram/i.test(code)) return 'クラス図';
-  if (/gantt/i.test(code)) return 'ガントチャート';
-  if (/pie/i.test(code)) return '円グラフ(Mermaid)';
-  if (/erDiagram/i.test(code)) return 'ER図';
-  if (/^\s*mindmap/im.test(code)) return 'マインドマップ';
-  if (/graph|flowchart/i.test(code)) return 'フローチャート';
-  return 'Mermaid図';
+  if (/sequenceDiagram/i.test(code)) return 'Sequence Diagram';
+  if (/classDiagram/i.test(code)) return 'Class Diagram';
+  if (/gantt/i.test(code)) return 'Gantt Chart';
+  if (/pie/i.test(code)) return 'Pie Chart (Mermaid)';
+  if (/erDiagram/i.test(code)) return 'ER Diagram';
+  if (/^\s*mindmap/im.test(code)) return 'Mind Map';
+  if (/graph|flowchart/i.test(code)) return 'Flowchart';
+  return 'Mermaid Diagram';
 }
 
 function detectChartLabel(code: string): string {
   try {
     const p = JSON.parse(code);
-    const m: Record<string, string> = { bar: '棒グラフ', line: '折れ線グラフ', pie: '円グラフ', scatter: '散布図' };
-    return m[p.type as string] ?? 'グラフ';
-  } catch { return 'グラフ'; }
+    const m: Record<string, string> = { bar: 'Bar Chart', line: 'Line Chart', pie: 'Pie Chart', scatter: 'Scatter Plot' };
+    return m[p.type as string] ?? 'Chart';
+  } catch { return 'Chart'; }
 }
 
 type QAKind = 'qa' | 'fill' | 'order' | 'choice' | 'truefalse' | 'flash';
@@ -134,11 +134,11 @@ function parseQAKind(code: string): QAKind {
 
 const QA_KIND_LABEL: Record<QAKind, string> = {
   qa: 'Q&A',
-  fill: '穴埋め問題',
-  order: '並べ替え問題',
-  choice: '選択問題',
-  truefalse: '○×問題',
-  flash: '単語カード',
+  fill: 'Fill-in',
+  order: 'Ordering',
+  choice: 'Multiple Choice',
+  truefalse: 'True/False',
+  flash: 'Flashcard',
 };
 
 interface QAPairParsed { q: string; a: string; opts?: string[] }
@@ -223,7 +223,7 @@ function parseAIResponse(text: string, allowMemoBlocks = true): {
       previewLabel: fileName,
       fileName,
     });
-    return `\n✨ [ファイル「${fileName}」を作ったよ]\n`;
+    return `\n✨ [Created file "${fileName}"]\n`;
   });
 
   // Fallback: catch geometry JSON that Gemini accidentally put in ```json fences or bare
@@ -232,8 +232,8 @@ function parseAIResponse(text: string, allowMemoBlocks = true): {
     try {
       parseGeometry(jsonStr.trim());
       const id = crypto.randomUUID();
-      blocks.push({ id, type: 'geometry', rawCode: jsonStr.trim(), previewLabel: '数学・幾何の図' });
-      return `\n✨ [数学の図を描いたよ]\n`;
+      blocks.push({ id, type: 'geometry', rawCode: jsonStr.trim(), previewLabel: 'Geometry Diagram' });
+      return `\n✨ [Drew a geometry diagram]\n`;
     } catch {
       return _full; // not a geometry block, leave it
     }
@@ -245,62 +245,62 @@ function parseAIResponse(text: string, allowMemoBlocks = true): {
     const id = crypto.randomUUID();
     if (type === 'mermaid') {
       blocks.push({ id, type: 'mermaid', rawCode: trimmed, previewLabel: detectMermaidLabel(trimmed) });
-      return `\n✨ [${detectMermaidLabel(trimmed)}を作ったよ]\n`;
+      return `\n✨ [Created ${detectMermaidLabel(trimmed)}]\n`;
     }
     if (type === 'chart') {
-      try { JSON.parse(trimmed); } catch { return '\n[グラフの生成に失敗しちゃった]\n'; }
+      try { JSON.parse(trimmed); } catch { return '\n[Failed to generate chart]\n'; }
       blocks.push({ id, type: 'chart', rawCode: trimmed, previewLabel: detectChartLabel(trimmed) });
-      return `\n✨ [${detectChartLabel(trimmed)}を作ったよ]\n`;
+      return `\n✨ [Created ${detectChartLabel(trimmed)}]\n`;
     }
     if (type === 'qa') {
       const pairs = parseQAPairs(trimmed);
-      if (pairs.length === 0) return '\n[Q&Aの解析に失敗しちゃった]\n';
-      const label = `${pairs.length}問の${QA_KIND_LABEL[parseQAKind(trimmed)]}`;
+      if (pairs.length === 0) return '\n[Failed to parse Q&A]\n';
+      const label = `${QA_KIND_LABEL[parseQAKind(trimmed)]} (${pairs.length} Q)`;
       blocks.push({ id, type: 'qa', rawCode: trimmed, previewLabel: label });
-      return `\n✨ [${label}を作ったよ]\n`;
+      return `\n✨ [Created ${label}]\n`;
     }
     if (type === 'geometry') {
-      try { parseGeometry(trimmed); } catch { return '\n[図の生成に失敗しちゃった]\n'; }
-      blocks.push({ id, type: 'geometry', rawCode: trimmed, previewLabel: '数学・幾何の図' });
-      return `\n✨ [数学の図を描いたよ]\n`;
+      try { parseGeometry(trimmed); } catch { return '\n[Failed to generate diagram]\n'; }
+      blocks.push({ id, type: 'geometry', rawCode: trimmed, previewLabel: 'Geometry Diagram' });
+      return `\n✨ [Drew a geometry diagram]\n`;
     }
     if (type === 'memo_create' && allowMemoBlocks) {
       const firstLine = trimmed.split('\n')[0] || '';
       const titleMatch = firstLine.match(/^@@memo_create\s*:\s*(.+)/);
-      const memoTitle = titleMatch?.[1]?.trim() || '新しいメモ';
+      const memoTitle = titleMatch?.[1]?.trim() || 'New Note';
       const content = trimmed.split('\n').slice(1).join('\n').trim();
-      blocks.push({ id, type: 'memo_create', rawCode: content, previewLabel: `メモ作成: ${memoTitle}`, memoTitle });
-      return `\n✨ [「${memoTitle}」というメモを作る準備ができたよ]\n`;
+      blocks.push({ id, type: 'memo_create', rawCode: content, previewLabel: `Create note: ${memoTitle}`, memoTitle });
+      return `\n✨ [Ready to create note "${memoTitle}"]\n`;
     }
     if (type === 'memo_overwrite' && allowMemoBlocks) {
       const firstLine = trimmed.split('\n')[0] || '';
       const idMatch = firstLine.match(/^@@memo_overwrite\s*:\s*(\d+)/);
       const memoId = idMatch ? Number(idMatch[1]) : undefined;
       const content = trimmed.split('\n').slice(1).join('\n').trim();
-      blocks.push({ id, type: 'memo_overwrite', rawCode: content, previewLabel: `メモ上書き: ID ${memoId ?? '不明'}`, memoId });
-      return `\n✨ [メモを書き換える準備ができたよ]\n`;
+      blocks.push({ id, type: 'memo_overwrite', rawCode: content, previewLabel: `Overwrite note: ID ${memoId ?? 'unknown'}`, memoId });
+      return `\n✨ [Ready to overwrite note]\n`;
     }
     if (type === 'folder_create') {
       const lines = trimmed.split('\n');
       const nameMatch = lines[0]?.match(/^@@folder_create\s*:\s*(.+)/);
       const colorMatch = lines.find((l: string) => l.startsWith('@@color:'))?.match(/^@@color:\s*(.+)/);
-      const folderName = nameMatch?.[1]?.trim() || '新しいフォルダ';
+      const folderName = nameMatch?.[1]?.trim() || 'New Folder';
       const folderColor = colorMatch?.[1]?.trim();
-      blocks.push({ id, type: 'folder_create', rawCode: trimmed, previewLabel: `フォルダ作成: 📁 ${folderName}`, folderName, folderColor });
-      return `\n📁 [「${folderName}」フォルダを作る準備ができたよ]\n`;
+      blocks.push({ id, type: 'folder_create', rawCode: trimmed, previewLabel: `Create folder: 📁 ${folderName}`, folderName, folderColor });
+      return `\n📁 [Ready to create folder "${folderName}"]\n`;
     }
     if (type === 'note_move') {
       const lines = trimmed.split('\n');
       const idMatch = lines[0]?.match(/^@@note_move\s*:\s*(\d+)/);
       const folderMatch = lines.find((l: string) => l.startsWith('@@to_folder:'))?.match(/^@@to_folder:\s*(.+)/);
       const memoId = idMatch ? Number(idMatch[1]) : undefined;
-      const targetFolderName = folderMatch?.[1]?.trim() || '未分類';
-      blocks.push({ id, type: 'note_move', rawCode: trimmed, previewLabel: `移動: ID ${memoId ?? '?'} → 📁 ${targetFolderName}`, memoId, targetFolderName });
-      return `\n📁 [メモを「${targetFolderName}」に移動する準備ができたよ]\n`;
+      const targetFolderName = folderMatch?.[1]?.trim() || 'Uncategorized';
+      blocks.push({ id, type: 'note_move', rawCode: trimmed, previewLabel: `Move: ID ${memoId ?? '?'} → 📁 ${targetFolderName}`, memoId, targetFolderName });
+      return `\n📁 [Ready to move note to "${targetFolderName}"]\n`;
     }
     if (type === 'table') {
-      blocks.push({ id, type: 'table', rawCode: trimmed, previewLabel: '表' });
-      return '\n✨ [表を作ったよ]\n';
+      blocks.push({ id, type: 'table', rawCode: trimmed, previewLabel: 'Table' });
+      return '\n✨ [Created table]\n';
     }
     return '';
   }).trim();
@@ -399,7 +399,7 @@ function blockToHtml(block: InsertableBlock): string {
   }
   if (block.type === 'qa') {
     const pairs = parseQAPairs(block.rawCode);
-    if (pairs.length === 0) throw new Error('Q&Aの解析に失敗しました');
+    if (pairs.length === 0) throw new Error('Failed to parse Q&A');
     return `<div data-pairs="${escHtmlAttr(JSON.stringify(pairs))}" data-kind="${parseQAKind(block.rawCode)}" data-type="qa"></div>`;
   }
   if (block.type === 'geometry') {
@@ -419,7 +419,7 @@ function blockToHtml(block: InsertableBlock): string {
 
 async function insertBlockIntoNote(block: InsertableBlock, noteId: number): Promise<void> {
   const note = await db.notes.get(noteId);
-  if (!note) throw new Error('メモが見つかりません');
+  if (!note) throw new Error('Note not found');
   const appendHtml = blockToHtml(block);
   if (!appendHtml) return;
   await db.notes.update(noteId, {
@@ -432,7 +432,7 @@ async function createNoteWithBlock(block: InsertableBlock, title: string): Promi
   const t = Date.now();
   const id = await db.notes.add({
     syncId: newSyncId(),
-    title: title || 'Lily が作ったメモ',
+    title: title || 'Note by Lily',
     content: blockToHtml(block),
     type: 'text',
     createdAt: t,
@@ -444,9 +444,9 @@ async function createNoteWithBlock(block: InsertableBlock, title: string): Promi
 function buildSystemPrompt(contextNotes: Note[]): string {
   if (contextNotes.length === 0) return LILY_CHAT_SYSTEM_PROMPT;
   const context = contextNotes
-    .map(n => `## ${n.title || '無題'} (ID:${n.id})\n${noteHtmlToText(n.content || '').slice(0, 4000)}`)
+    .map(n => `## ${n.title || 'Untitled'} (ID:${n.id})\n${noteHtmlToText(n.content || '').slice(0, 4000)}`)
     .join('\n\n---\n\n');
-  return `${LILY_CHAT_SYSTEM_PROMPT}\n\n【参照中のメモ (${contextNotes.length}件)】\n${context}`;
+  return `${LILY_CHAT_SYSTEM_PROMPT}\n\n[Selected notes (${contextNotes.length})]\n${context}`;
 }
 
 const SIKU_MODE_PROMPTS: Record<string, string> = {
@@ -507,18 +507,18 @@ function buildSikunSystemPrompt(contextNotes: Note[], allFolders?: Folder[], mod
   const modePrompt = mode ? (SIKU_MODE_PROMPTS[mode] ?? '') : '';
   let extra = '';
   if (allFolders && allFolders.length > 0) {
-    const list = allFolders.map(f => `- 「${f.name}」(フォルダID:${f.id})`).join('\n');
-    extra += `\n\n【既存のフォルダ (${allFolders.length}件)】\n${list}`;
+    const list = allFolders.map(f => `- "${f.name}" (Folder ID:${f.id})`).join('\n');
+    extra += `\n\n[Existing folders (${allFolders.length})]\n${list}`;
   }
   if (contextNotes.length > 0) {
     const notesCtx = contextNotes
       .map(n => {
         const folder = allFolders?.find(f => f.id === n.folderId);
-        const loc = folder ? ` [フォルダ:${folder.name}]` : ' [未分類]';
-        return `## ${n.title || '無題'} (ID:${n.id})${loc}\n${noteHtmlToText(n.content || '').slice(0, 4000)}`;
+        const loc = folder ? ` [Folder:${folder.name}]` : ' [Uncategorized]';
+        return `## ${n.title || 'Untitled'} (ID:${n.id})${loc}\n${noteHtmlToText(n.content || '').slice(0, 4000)}`;
       })
       .join('\n\n---\n\n');
-    extra += `\n\n【参照中のメモ (${contextNotes.length}件)】\n${notesCtx}`;
+    extra += `\n\n[Selected notes (${contextNotes.length})]\n${notesCtx}`;
   }
   return `${base}${modePrompt}${extra}`;
 }
@@ -528,81 +528,81 @@ function buildSikunSystemPrompt(contextNotes: Note[], allFolders?: Folder[], mod
 /* ─────────────── Help Modal ─────────────── */
 
 const LILY_FEATURES = [
-  { icon: '📝', title: 'メモ分析・要約', desc: '選択中のメモを読んで要点まとめ・アドバイス' },
-  { icon: '🗺️', title: 'マインドマップ', desc: 'アイデア出し・ブレスト → Mermaid mindmap で可視化' },
-  { icon: '📊', title: 'グラフ作成', desc: 'データを棒・折れ線・円グラフなどに可視化 (Chart.js)' },
-  { icon: '🔷', title: 'Mermaid 図', desc: 'フロー・シーケンス・クラス図・ER図・ガントチャート' },
-  { icon: '📐', title: '数学・幾何の図', desc: '座標平面に点・ベクトル・円・関数グラフを描画' },
-  { icon: '❓', title: 'Q&A・問題作成', desc: '一問一答・穴埋め・4択・○×・単語カードなど6形式' },
-  { icon: '📄', title: 'PDF・画像解析', desc: 'ファイルを添付して内容分析・要約・図表化' },
-  { icon: '💻', title: 'コードスニペット', desc: 'Python/JS/HTMLなどのコード生成・解説' },
-  { icon: '✉️', title: 'メール文面作成', desc: 'メモを元に報告メール・議事録メールの下書き' },
-  { icon: '✍️', title: 'トーン調整', desc: '文章をフォーマル/カジュアル/丁寧に書き換え' },
-  { icon: '📰', title: 'ブログ案', desc: 'メモからブログタイトル案・構成案を提案' },
-  { icon: '💾', title: 'メモ書き込み', desc: '「メモに書いて」で新規作成・選択中メモを上書き保存' },
+  { icon: '📝', title: 'Note Analysis & Summary', desc: 'Read the selected note and summarize key points with advice' },
+  { icon: '🗺️', title: 'Mind Map', desc: 'Brainstorm ideas → visualize with Mermaid mindmap' },
+  { icon: '📊', title: 'Chart Creation', desc: 'Visualize data as bar, line, pie charts etc. (Chart.js)' },
+  { icon: '🔷', title: 'Mermaid Diagram', desc: 'Flowchart, sequence, class, ER diagram, Gantt chart' },
+  { icon: '📐', title: 'Math & Geometry', desc: 'Plot points, vectors, circles, function graphs on a coordinate plane' },
+  { icon: '❓', title: 'Q&A / Quiz Creation', desc: 'Flash cards, fill-in, 4-choice, true/false, vocab cards — 6 formats' },
+  { icon: '📄', title: 'PDF & Image Analysis', desc: 'Attach files to analyze, summarize, or visualize content' },
+  { icon: '💻', title: 'Code Snippets', desc: 'Generate and explain Python/JS/HTML and more' },
+  { icon: '✉️', title: 'Email Drafting', desc: 'Draft report emails and meeting minutes from your notes' },
+  { icon: '✍️', title: 'Tone Adjustment', desc: 'Rewrite text as formal, casual, or polite' },
+  { icon: '📰', title: 'Blog Ideas', desc: 'Suggest blog titles and outlines from your notes' },
+  { icon: '💾', title: 'Write to Note', desc: 'Say "write to note" to create a new note or overwrite the selected one' },
 ];
 
 const SIKU_FEATURES = [
-  { icon: '📚', title: '全メモ横断分析', desc: '複数メモ・全メモを一括で参照・分析・整理提案' },
-  { icon: '🔍', title: '調査・検証', desc: '事実確認・情報源の信頼性評価・矛盾の検出・訂正' },
-  { icon: '⚙️', title: '大規模コード構築', desc: '複数ファイルにまたがるプロジェクト全体を設計・実装' },
-  { icon: '📈', title: 'データ解析', desc: '非構造化データの統合解析・パターン認識・将来予測' },
-  { icon: '🗂️', title: 'メモ整理', desc: 'メモ間の関連性・重複・矛盾を検出してリンク提案' },
-  { icon: '🌐', title: 'Deep Research', desc: '数分かけてウェブ全体を深くリサーチしてレポート作成' },
-  { icon: '📄', title: 'PDF・画像解析', desc: 'ファイルを添付して内容分析・検証・要約' },
-  { icon: '💾', title: 'メモ書き込み', desc: '「メモに書いて」「整理してメモにして」で保存・上書き' },
-  { icon: '🌍', title: '翻訳・要約', desc: '多言語翻訳、長文の要約、文章の変換' },
+  { icon: '📚', title: 'Cross-Note Analysis', desc: 'Reference, analyze, and organize multiple or all notes at once' },
+  { icon: '🔍', title: 'Research & Verification', desc: 'Fact-checking, source reliability, contradiction detection & correction' },
+  { icon: '⚙️', title: 'Large-Scale Code', desc: 'Design and implement entire multi-file projects' },
+  { icon: '📈', title: 'Data Analysis', desc: 'Integrated analysis of unstructured data, pattern recognition, forecasting' },
+  { icon: '🗂️', title: 'Note Organization', desc: 'Detect relationships, duplicates, contradictions and propose links' },
+  { icon: '🌐', title: 'Deep Research', desc: 'Spend several minutes deeply researching the web and create a report' },
+  { icon: '📄', title: 'PDF & Image Analysis', desc: 'Attach files to analyze, verify, and summarize content' },
+  { icon: '💾', title: 'Write to Note', desc: 'Say "write to note" or "organize into a note" to save or overwrite' },
+  { icon: '🌍', title: 'Translation & Summary', desc: 'Multilingual translation, summarize long text, text transformation' },
 ];
 
 const LILY_PROMPTS = [
-  'このメモの要点を3つにまとめて',
-  '「スマートホーム」についてマインドマップを作って',
-  '先週の売上データをグラフにして\n月曜:120 火曜:95 水曜:140 木曜:110 金曜:160',
-  'このメモからテスト問題を4択で5問作って',
-  '次の文章をフォーマルに書き換えて',
-  'このメモを元に上司への報告メールを作って',
-  '二次方程式 x²+3x+2=0 を図を使って解説して',
-  'フローチャート: ユーザー登録フローを図にして',
+  'Summarize this note in 3 key points',
+  'Create a mind map about "smart home"',
+  'Turn last week\'s sales data into a chart\nMon:120 Tue:95 Wed:140 Thu:110 Fri:160',
+  'Make 5 multiple-choice questions from this note',
+  'Rewrite the following text in a formal tone',
+  'Draft a report email to my manager based on this note',
+  'Explain the quadratic x²+3x+2=0 with a diagram',
+  'Flowchart: draw a user registration flow',
 ];
 
 const SIKU_PROMPTS = [
-  '全メモを読んで重複している内容をまとめて',
-  '「地球温暖化は人間活動が原因だ」この主張の根拠と反論を検証して',
-  'React + TypeScript で TODO アプリを作って。CRUD 全部実装して',
-  'このメモ群の中で矛盾している記述はある？',
-  '全メモを分析してフォルダ分類案を提案して',
-  'このメモの内容を整理してメモに書いて',
+  'Read all notes and summarize any duplicated content',
+  'Verify the claim "global warming is caused by human activity" — show evidence and counterarguments',
+  'Build a TODO app in React + TypeScript with full CRUD',
+  'Are there any contradictory statements in these notes?',
+  'Analyze all notes and propose a folder classification',
+  'Organize this note\'s content and write it to a note',
 ];
 
 const TIPS = [
-  { title: '🌱 節約モードでコストを抑える', desc: 'ヘッダーの「節約モード」をONにすると、思考をオフ＋軽量モデルで答えるので、API料金が最大で約1/20になります。普段使いは節約モードがおすすめ。' },
-  { title: 'メモを選んでから話しかける', desc: '右上の「メモを選ぶ」でメモを選択してから質問すると、AI がメモの内容を読んで回答できます。' },
-  { title: 'ファイルを添付する', desc: '📎ボタンで PDF・画像を添付できます。「これを要約して」「この画像について説明して」と送信するだけ。' },
-  { title: '会話を保存・復元できる', desc: 'ヘッダーの💾ボタンで今の会話を保存、🕐ボタンで保存した会話を開いたり削除できます（端末内に保存）。' },
-  { title: 'Lily はメモを直接書き込める', desc: '「このメモを書き換えて」「要約してメモに保存して」と頼むと、編集候補を提案してくれます。確認後に保存されます。' },
-  { title: 'sikunlily は厳しく検証する', desc: '内容の間違いや矛盾があると遠慮なく指摘します。「この情報は正しい？」「根拠は？」という使い方に最適です。' },
-  { title: 'ネット検索を ON にする', desc: '「ネット検索 ON」にすると最新情報も調べて答えます。時事ニュース・最新技術の調査に有効（料金が少し加算されます）。' },
-  { title: 'sikunlily の Deep Research', desc: '「Deep Research ON」にすると数分かけてウェブ全体をリサーチし、詳細なレポートを作成します（料金が高め）。' },
+  { title: '🌱 Cut costs with Economy Mode', desc: 'Turn on "Economy Mode" in the header to disable thinking and use a lighter model — reducing API costs by up to ~1/20. Recommended for everyday use.' },
+  { title: 'Select a note before chatting', desc: 'Tap "Select note" in the top right, then ask your question. The AI will read the note content to answer you.' },
+  { title: 'Attach files', desc: 'Tap the 📎 button to attach PDFs or images. Just send "summarize this" or "explain this image".' },
+  { title: 'Save and restore conversations', desc: 'Tap the 💾 button in the header to save the current chat. Tap the 🕐 button to view, load, or delete saved chats (stored on device).' },
+  { title: 'Lily can write directly to notes', desc: 'Ask "rewrite this note" or "save summary to note" and Lily will propose edits. Saved only after you confirm.' },
+  { title: 'sikunlily rigorously fact-checks', desc: 'It will point out errors and contradictions without hesitation. Ideal for "is this correct?" or "what\'s the evidence?" use cases.' },
+  { title: 'Turn on web search', desc: 'Enable "Web Search" to look up the latest information. Useful for current events and emerging tech (adds a small extra cost).' },
+  { title: 'sikunlily Deep Research', desc: 'Enable "Deep Research" to spend several minutes researching the entire web and produce a detailed report (higher cost).' },
 ];
 
 // Rough per-message API cost estimates (JPY, ~¥155/USD). All models are
 // Google Gemini 2.5 flash / flash-lite. Output tokens and "thinking" are the
 // main cost; input (PDF pages, images, memo context) is comparatively cheap.
 const PRICE_ROWS = [
-  { label: 'Lily（通常の質問）', cost: '約 ¥0.3〜1', note: '要約・翻訳・メール・相談などテキスト中心' },
-  { label: 'Lily＋問題作成', cost: '約 ¥1〜8', note: '問題数が多いほど高い（書く量＝出力が増える）' },
-  { label: 'Lily＋PDF・画像', cost: '約 ¥1〜3', note: 'ページ数ぶん読む量が増える（入力は安め）' },
-  { label: 'sikunlily（思考あり）', cost: '約 ¥3〜6', note: '思考トークンが主なコスト' },
-  { label: 'ネット検索 ON', cost: '＋数円／回', note: '検索（グラウンディング）が別途加算' },
-  { label: 'Deep Research', cost: '約 ¥20〜100＋', note: '数分・複数検索の重い処理' },
-  { label: '🌱 節約モード', cost: '約 ¥0.1〜0.5', note: '思考オフ＋軽量モデルで最大約1/20' },
+  { label: 'Lily (regular questions)', cost: '~¥0.3–1', note: 'Text-centered tasks like summaries, translation, email' },
+  { label: 'Lily + quiz creation', cost: '~¥1–8', note: 'More questions = more output = higher cost' },
+  { label: 'Lily + PDF/image', cost: '~¥1–3', note: 'More pages = more input (input is relatively cheap)' },
+  { label: 'sikunlily (with thinking)', cost: '~¥3–6', note: 'Thinking tokens are the main cost' },
+  { label: 'Web Search ON', cost: '+a few ¥/req', note: 'Grounding search billed separately' },
+  { label: 'Deep Research', cost: '~¥20–100+', note: 'Heavy processing: several minutes, multiple searches' },
+  { label: '🌱 Economy Mode', cost: '~¥0.1–0.5', note: 'Thinking off + lightweight model, up to ~1/20 cost' },
 ];
 
 const PRICE_USERS = [
-  { label: 'ライトに使う人', desc: '1日数回、テキスト中心', cost: '月 約 ¥30〜150' },
-  { label: '標準的に使う人', desc: 'lily中心＋たまにPDF・問題作成・sikunlily', cost: '月 約 ¥150〜500' },
-  { label: 'ヘビーに使う人', desc: 'sikunlilyの思考・Deep Research・検索を多用', cost: '月 約 ¥1,000〜' },
-  { label: '節約モード中心', desc: '標準的な使い方でも節約モードON', cost: '月 約 ¥50〜150' },
+  { label: 'Light user', desc: 'A few times/day, text-focused', cost: '~¥30–150/mo' },
+  { label: 'Regular user', desc: 'Mainly Lily + occasional PDF, quizzes, sikunlily', cost: '~¥150–500/mo' },
+  { label: 'Heavy user', desc: 'Frequent sikunlily thinking, Deep Research, web search', cost: '~¥1,000+/mo' },
+  { label: 'Economy Mode focus', desc: 'Economy Mode always on for typical usage', cost: '~¥50–150/mo' },
 ];
 
 function HelpModal({ onClose, initialTab }: { onClose: () => void; initialTab: 'lily' | 'sikunlily' | 'tips' | 'cost' }) {
@@ -611,20 +611,20 @@ function HelpModal({ onClose, initialTab }: { onClose: () => void; initialTab: '
     <div className="help-overlay" onClick={onClose}>
       <div className="help-modal" onClick={e => e.stopPropagation()}>
         <div className="help-header">
-          <span className="help-title">使い方ガイド</span>
+          <span className="help-title">User Guide</span>
           <button className="help-close" onClick={onClose}><X size={18} /></button>
         </div>
         <div className="help-tabs">
           {(['lily', 'sikunlily', 'tips', 'cost'] as const).map(t => (
             <button key={t} className={`help-tab${tab === t ? ' active' : ''}`} onClick={() => setTab(t)}>
-              {t === 'lily' ? '🌸 Lily' : t === 'sikunlily' ? '⚔️ sikunlily' : t === 'tips' ? '💡 使い方' : '💰 料金'}
+              {t === 'lily' ? '🌸 Lily' : t === 'sikunlily' ? '⚔️ sikunlily' : t === 'tips' ? '💡 Tips' : '💰 Pricing'}
             </button>
           ))}
         </div>
         <div className="help-body">
           {tab === 'lily' && (
             <>
-              <p className="help-lead">Lily はノート作成・学習・創作をサポートする優しいAIアシスタントです。</p>
+              <p className="help-lead">Lily is a friendly AI assistant that supports note-taking, learning, and creative writing.</p>
               <div className="help-grid">
                 {LILY_FEATURES.map(f => (
                   <div key={f.title} className="help-card">
@@ -633,7 +633,7 @@ function HelpModal({ onClose, initialTab }: { onClose: () => void; initialTab: '
                   </div>
                 ))}
               </div>
-              <p className="help-section-title">プロンプト例</p>
+              <p className="help-section-title">Example prompts</p>
               <div className="help-prompts">
                 {LILY_PROMPTS.map(p => <div key={p} className="help-prompt">{p}</div>)}
               </div>
@@ -641,7 +641,7 @@ function HelpModal({ onClose, initialTab }: { onClose: () => void; initialTab: '
           )}
           {tab === 'sikunlily' && (
             <>
-              <p className="help-lead">sikunlily は正確性・批判的思考を重視する開発者向けAIです。間違いは遠慮なく指摘します。</p>
+              <p className="help-lead">sikunlily is a developer-focused AI that prioritizes accuracy and critical thinking. It will point out mistakes without hesitation.</p>
               <div className="help-grid">
                 {SIKU_FEATURES.map(f => (
                   <div key={f.title} className="help-card">
@@ -650,7 +650,7 @@ function HelpModal({ onClose, initialTab }: { onClose: () => void; initialTab: '
                   </div>
                 ))}
               </div>
-              <p className="help-section-title">プロンプト例</p>
+              <p className="help-section-title">Example prompts</p>
               <div className="help-prompts">
                 {SIKU_PROMPTS.map(p => <div key={p} className="help-prompt">{p}</div>)}
               </div>
@@ -669,7 +669,7 @@ function HelpModal({ onClose, initialTab }: { onClose: () => void; initialTab: '
           {tab === 'cost' && (
             <>
               <p className="help-lead">
-                AI は Google Gemini（2.5 flash / flash-lite）を使っています。料金は「書く量（出力）」と「思考」が主で、PDF・画像・メモを読む量（入力）は比較的安いです。下の金額は1メッセージあたりの目安（円）です。
+                The AI uses Google Gemini (2.5 flash / flash-lite). The main costs are "output" (how much is written) and "thinking." Input (reading PDFs, images, notes) is comparatively cheap. The amounts below are rough estimates per message (in JPY).
               </p>
               <div className="price-table">
                 {PRICE_ROWS.map(r => (
@@ -680,18 +680,18 @@ function HelpModal({ onClose, initialTab }: { onClose: () => void; initialTab: '
                   </div>
                 ))}
               </div>
-              <p className="help-section-title">問題作成・PDFは料金が変わる？</p>
+              <p className="help-section-title">Does quiz creation or PDF affect the cost?</p>
               <div className="help-tips">
                 <div className="help-tip">
-                  <strong className="help-tip-title">❓ 問題作成</strong>
-                  <p className="help-tip-desc">問題の数だけ「書く量」が増えるので料金も増えます。5問なら数十銭〜1円程度、200問のような大量生成だと¥4〜8ほどになります。</p>
+                  <strong className="help-tip-title">❓ Quiz creation</strong>
+                  <p className="help-tip-desc">More questions = more output = higher cost. 5 questions costs ~¥0.1–1; large batches like 200 questions can reach ~¥4–8.</p>
                 </div>
                 <div className="help-tip">
-                  <strong className="help-tip-title">📄 PDF・画像読み込み</strong>
-                  <p className="help-tip-desc">ページ数ぶん「読む量」が増えますが、入力は安いので影響は小さめ。10ページのPDFでも+¥1前後。むしろ回答（出力）の長さの方が料金に効きます。</p>
+                  <strong className="help-tip-title">📄 PDF & image reading</strong>
+                  <p className="help-tip-desc">More pages = more input, but input is cheap so the impact is small. A 10-page PDF adds ~+¥1. The length of the response (output) has a bigger effect on cost.</p>
                 </div>
               </div>
-              <p className="help-section-title">一般的なユーザー1人あたりの目安</p>
+              <p className="help-section-title">Typical cost per user</p>
               <div className="price-table">
                 {PRICE_USERS.map(u => (
                   <div key={u.label} className="price-row">
@@ -701,7 +701,7 @@ function HelpModal({ onClose, initialTab }: { onClose: () => void; initialTab: '
                   </div>
                 ))}
               </div>
-              <p className="help-note">※ 為替（約¥155/＄）やGoogleの価格改定で変動します。あくまで目安です。節約するなら「🌱 節約モード」をON、ネット検索・Deep Researchは必要な時だけONがおすすめ。</p>
+              <p className="help-note">※ Estimates vary with exchange rates (~¥155/$) and Google pricing changes. To save costs, turn on "🌱 Economy Mode" and only enable Web Search / Deep Research when needed.</p>
             </>
           )}
         </div>
@@ -783,8 +783,8 @@ function MermaidPreview({ code, baseName }: { code: string; baseName: string }) 
   }, [code]);
   if (err) return (
     <div className="prev-err">
-      Mermaid 構文エラー💦<br />
-      <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>メモに追加すると編集画面から修正できるよ</span>
+      Mermaid syntax error 💦<br />
+      <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>Add it to a note to fix it in the editor</span>
     </div>
   );
   return (
@@ -792,10 +792,10 @@ function MermaidPreview({ code, baseName }: { code: string; baseName: string }) 
       <div className="mmd-prev" dangerouslySetInnerHTML={{ __html: svg }} />
       <ImageSaveBar>
         <button onClick={() => downloadSvgAsPng(svg, `${baseName}.png`)} disabled={!svg}>
-          <Download size={13} /> PNG保存
+          <Download size={13} /> Save PNG
         </button>
         <button onClick={() => downloadSvg(svg, `${baseName}.svg`)} disabled={!svg}>
-          <Download size={13} /> SVG保存
+          <Download size={13} /> Save SVG
         </button>
       </ImageSaveBar>
       <style jsx>{`
@@ -813,7 +813,7 @@ function ChartPreview({ code, baseName }: { code: string; baseName: string }) {
     try { return JSON.parse(code); } catch { return null; }
   }, [code]);
   if (!cfg || !cfg.data || !Array.isArray(cfg.data.datasets)) {
-    return <div className="prev-err">グラフのプレビューを表示できなかったよ💦</div>;
+    return <div className="prev-err">Could not display chart preview 💦</div>;
   }
   const props = {
     ref: chartRef,
@@ -835,7 +835,7 @@ function ChartPreview({ code, baseName }: { code: string; baseName: string }) {
       </div>
       <ImageSaveBar>
         <button onClick={savePng}>
-          <Download size={13} /> PNG画像で保存
+          <Download size={13} /> Save as PNG
         </button>
       </ImageSaveBar>
     </div>
@@ -846,16 +846,16 @@ function GeometryPreview({ code, baseName }: { code: string; baseName: string })
   const svg = useMemo(() => {
     try { return renderGeometrySvg(parseGeometry(code)); } catch { return ''; }
   }, [code]);
-  if (!svg) return <div className="prev-err">図のプレビューを表示できなかったよ💦</div>;
+  if (!svg) return <div className="prev-err">Could not display diagram preview 💦</div>;
   return (
     <div>
       <div className="geo-prev" dangerouslySetInnerHTML={{ __html: svg }} />
       <ImageSaveBar>
         <button onClick={() => downloadSvgAsPng(svg, `${baseName}.png`)}>
-          <Download size={13} /> PNG保存
+          <Download size={13} /> Save PNG
         </button>
         <button onClick={() => downloadSvg(svg, `${baseName}.svg`)}>
-          <Download size={13} /> SVG保存
+          <Download size={13} /> Save SVG
         </button>
       </ImageSaveBar>
       <style jsx>{`
@@ -873,7 +873,7 @@ function FilePreview({ block }: { block: InsertableBlock }) {
       <pre className="file-snippet">{snippet}{block.rawCode.length > 400 ? '\n…' : ''}</pre>
       <ImageSaveBar>
         <button onClick={() => downloadTextFile(block.rawCode, block.fileName || 'lily-file.txt')}>
-          <FileDown size={13} /> {block.fileName} をダウンロード
+          <FileDown size={13} /> Download {block.fileName}
         </button>
       </ImageSaveBar>
       <style jsx>{`
@@ -898,7 +898,7 @@ function QAPreview({ code }: { code: string }) {
   return (
     <div className="qa-prev">
       <div className={`qa-prev-progress${allDone ? ' all-done' : ''}`}>
-        {checked.size}/{pairs.length} 完了
+        {checked.size}/{pairs.length} done
       </div>
       {pairs.map((p, i) => (
         <div key={i} className={`qa-item${checked.has(i) ? ' checked' : ''}`}>
@@ -909,7 +909,7 @@ function QAPreview({ code }: { code: string }) {
           {open.has(i) ? (
             <div className="qa-a">A. {p.a}</div>
           ) : (
-            <button className="qa-show" onClick={() => setOpen(s => new Set(s).add(i))}>答えを見る</button>
+            <button className="qa-show" onClick={() => setOpen(s => new Set(s).add(i))}>Show answer</button>
           )}
         </div>
       ))}
@@ -944,14 +944,14 @@ function MemoPermissionModal({
   const [status, setStatus] = useState<'idle' | 'loading' | 'done'>('idle');
   const existingNote = block.memoId != null ? allNotes.find(n => n.id === block.memoId) : undefined;
   const confirmMsg = block.type === 'memo_create'
-    ? `「${block.memoTitle || '新しいメモ'}」という新しいメモを作っていい？`
-    : `「${existingNote?.title || `メモ ID:${block.memoId}`}」を書き換えていい？`;
+    ? `Create a new note "${block.memoTitle || 'New Note'}"?`
+    : `Overwrite "${existingNote?.title || `Note ID:${block.memoId}`}"?`;
 
   const handleOk = async () => {
     setStatus('loading');
     try {
       if (block.type === 'memo_create') {
-        const id = await createNoteWithBlock(block, block.memoTitle || '新しいメモ');
+        const id = await createNoteWithBlock(block, block.memoTitle || 'New Note');
         onNoteCreated?.(id as number);
       } else if (block.type === 'memo_overwrite' && block.memoId != null) {
         const html = `<p>${block.rawCode.split('\n').map(escHtmlAttr).join('</p><p>')}</p>`;
@@ -969,9 +969,9 @@ function MemoPermissionModal({
       <div className="memo-modal" onClick={e => e.stopPropagation()}>
         <p className="memo-modal-q">{confirmMsg}</p>
         <div className="memo-modal-actions">
-          <button className="memo-btn cancel" onClick={onClose} disabled={status === 'loading'}>キャンセル</button>
+          <button className="memo-btn cancel" onClick={onClose} disabled={status === 'loading'}>Cancel</button>
           <button className="memo-btn ok" onClick={handleOk} disabled={status !== 'idle'}>
-            {status === 'loading' ? '保存中...' : status === 'done' ? '✓ 完了' : 'OK'}
+            {status === 'loading' ? 'Saving...' : status === 'done' ? '✓ Done' : 'OK'}
           </button>
         </div>
       </div>
@@ -1018,7 +1018,7 @@ function ZipDownloadButton({ blocks }: { blocks: InsertableBlock[] }) {
   return (
     <button className="zip-download-btn" onClick={handleZip} disabled={status === 'loading'}>
       <span>📦</span>
-      {status === 'loading' ? 'ZIPを作成中...' : `${blocks.length}ファイルをまとめてZIPダウンロード`}
+      {status === 'loading' ? 'Creating ZIP...' : `Download ${blocks.length} files as ZIP`}
       <style jsx>{`
         .zip-download-btn { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 16px; background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 15%, transparent), color-mix(in srgb, var(--primary) 8%, transparent)); border: 1.5px dashed var(--primary); border-radius: 10px; color: var(--primary); font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.15s; margin-top: 4px; }
         .zip-download-btn:hover:not(:disabled) { background: var(--primary); color: white; }
@@ -1034,7 +1034,7 @@ function FolderActionCard({ block, allNotes }: { block: InsertableBlock; allNote
 
   const noteTitle = block.memoId != null
     ? (allNotes.find(n => n.id === block.memoId)?.title || `ID:${block.memoId}`)
-    : '不明';
+    : 'unknown';
 
   const handleExecute = async () => {
     if (status !== 'idle') return;
@@ -1074,9 +1074,9 @@ function FolderActionCard({ block, allNotes }: { block: InsertableBlock; allNote
 
   const icon = block.type === 'folder_create' ? '📁' : '📄';
   const label = block.type === 'folder_create'
-    ? `フォルダ「${block.folderName}」を作成`
-    : `「${noteTitle}」→ 📁 ${block.targetFolderName}`;
-  const btnLabel = block.type === 'folder_create' ? 'フォルダを作成する' : 'メモを移動する';
+    ? `Create folder "${block.folderName}"`
+    : `"${noteTitle}" → 📁 ${block.targetFolderName}`;
+  const btnLabel = block.type === 'folder_create' ? 'Create folder' : 'Move note';
 
   return (
     <div className="folder-action-card">
@@ -1086,7 +1086,7 @@ function FolderActionCard({ block, allNotes }: { block: InsertableBlock; allNote
         onClick={handleExecute}
         disabled={status !== 'idle'}
       >
-        {status === 'loading' ? '実行中...' : status === 'done' ? '✓ 完了' : status === 'error' ? '✕ 失敗' : btnLabel}
+        {status === 'loading' ? 'Running...' : status === 'done' ? '✓ Done' : status === 'error' ? '✕ Failed' : btnLabel}
       </button>
       <style jsx>{`
         .folder-action-card { background: var(--background); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-top: 8px; display: flex; align-items: center; gap: 10px; }
@@ -1140,7 +1140,7 @@ function InsertableBlockCard({
       setStatus('success');
       setTimeout(() => setStatus('idle'), 2500);
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : '挿入に失敗しちゃった');
+      setErrorMsg(e instanceof Error ? e.message : 'Failed to insert');
       setStatus('error');
       setTimeout(() => setStatus('idle'), 3000);
     }
@@ -1166,7 +1166,7 @@ function InsertableBlockCard({
       {(block.type === 'memo_create' || block.type === 'memo_overwrite') ? (
         <>
           <button className="memo-confirm-btn" onClick={() => setShowMemoModal(true)}>
-            {block.type === 'memo_create' ? '✏️ このメモを作成する' : '📝 上書きを確認する'}
+            {block.type === 'memo_create' ? '✏️ Create this note' : '📝 Confirm overwrite'}
           </button>
           {showMemoModal && (
             <MemoPermissionModal
@@ -1181,9 +1181,9 @@ function InsertableBlockCard({
         <>
         <div className="block-insert-row">
           <select className="note-select" value={target} onChange={e => setTarget(e.target.value)}>
-            <option value={NEW_NOTE}>✏️ 新規メモを作成</option>
+            <option value={NEW_NOTE}>✏️ Create new note</option>
             {allNotes.map(n => (
-              <option key={n.id} value={String(n.id)}>{n.title || '無題のメモ'}</option>
+              <option key={n.id} value={String(n.id)}>{n.title || 'Untitled'}</option>
             ))}
           </select>
           <button
@@ -1191,7 +1191,7 @@ function InsertableBlockCard({
             onClick={handleInsert}
             disabled={status === 'loading' || status === 'success'}
           >
-            {status === 'loading' ? '...追加中' : status === 'success' ? '✓ 追加完了！' : status === 'error' ? '✕ 失敗' : 'メモに追加'}
+            {status === 'loading' ? '...Adding' : status === 'success' ? '✓ Added!' : status === 'error' ? '✕ Failed' : 'Add to note'}
           </button>
         </div>
         {errorMsg && <p className="block-error">{errorMsg}</p>}
@@ -1253,11 +1253,11 @@ function ClarifyBottomSheet({
         <div className="clarify-header">
           <div className="clarify-q-wrap">
             {progress.total > 1 && (
-              <span className="clarify-progress">質問 {progress.current} / {progress.total}</span>
+              <span className="clarify-progress">Question {progress.current} / {progress.total}</span>
             )}
             <span className="clarify-question">{question.question}</span>
           </div>
-          <button className="clarify-close" onClick={onDismiss} title="閉じる">
+          <button className="clarify-close" onClick={onDismiss} title="Close">
             <X size={16} />
           </button>
         </div>
@@ -1280,7 +1280,7 @@ function ClarifyBottomSheet({
           <Pencil size={15} className="clarify-pencil" />
           <input
             className="clarify-input"
-            placeholder="回答を入力..."
+            placeholder="Type your answer..."
             value={freeText}
             onChange={e => setFreeText(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') handleFreeSubmit(); }}
@@ -1383,7 +1383,7 @@ function CopyButton({ text, light }: { text: string; light?: boolean }) {
   };
   return (
     <>
-      <button className={`copy-btn${light ? ' copy-btn-light' : ''}`} onClick={copy} title="コピー">
+      <button className={`copy-btn${light ? ' copy-btn-light' : ''}`} onClick={copy} title="Copy">
         {copied ? '✓' : '⎘'}
       </button>
       <style jsx>{`
@@ -1423,7 +1423,7 @@ function LilyBubble({
           <CopyButton text={message.text} />
         </div>
         {message.questions && message.questions.length > 0 && (
-          <div className="ask-asked-hint">❓ {message.questions.length}件の質問をしたよ</div>
+          <div className="ask-asked-hint">❓ Asked {message.questions.length} question{message.questions.length !== 1 ? 's' : ''}</div>
         )}
         {message.thinking && (
           <div className="thinking-toggle-wrap">
@@ -1431,7 +1431,7 @@ function LilyBubble({
               className="thinking-toggle-btn"
               onClick={() => setThinkingOpen(o => !o)}
             >
-              🧠 思考の過程 {thinkingOpen ? '▲' : '▼'}
+              🧠 Thinking process {thinkingOpen ? '▲' : '▼'}
             </button>
             {thinkingOpen && (
               <div className="thinking-content">{message.thinking}</div>
@@ -1621,12 +1621,12 @@ function ChatHistoryModal({ onClose, onLoad }: { onClose: () => void; onLoad: (c
     <div className="history-overlay" onClick={onClose}>
       <div className="history-modal" onClick={e => e.stopPropagation()}>
         <div className="history-head">
-          <span className="history-head-title"><History size={16} /> 保存した会話</span>
-          <button className="history-close" onClick={onClose} title="閉じる"><X size={18} /></button>
+          <span className="history-head-title"><History size={16} /> Saved chats</span>
+          <button className="history-close" onClick={onClose} title="Close"><X size={18} /></button>
         </div>
         <div className="history-list">
           {(!chats || chats.length === 0) && (
-            <div className="history-empty">保存した会話はまだないよ。<br />会話上部の保存ボタン（💾）で残せるよ。</div>
+            <div className="history-empty">No saved chats yet.<br />Tap the save button (💾) at the top of the chat to save one.</div>
           )}
           {chats?.map(c => (
             <div key={c.id} className="history-item">
@@ -1635,11 +1635,11 @@ function ChatHistoryModal({ onClose, onLoad }: { onClose: () => void; onLoad: (c
                 <span className="history-texts">
                   <span className="history-title">{c.title}</span>
                   <span className="history-meta">
-                    {new Date(c.createdAt).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}・{c.count}件
+                    {new Date(c.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} · {c.count} msgs
                   </span>
                 </span>
               </button>
-              <button className="history-del" onClick={() => { if (c.id != null) deleteSavedChat(c.id); }} title="削除">
+              <button className="history-del" onClick={() => { if (c.id != null) deleteSavedChat(c.id); }} title="Delete">
                 <Trash2 size={15} />
               </button>
             </div>
@@ -1674,39 +1674,39 @@ function ChatHistoryModal({ onClose, onLoad }: { onClose: () => void; onLoad: (c
 // Examples written so first-time / non-technical users instantly see
 // the breadth of what Lily can do.
 const SUGGESTIONS = [
-  '今日の予定を整理して',
-  'このメモをわかりやすく要約して',
-  '丁寧なメールの文面を作って',
-  '英語に翻訳して',
-  '暗記用の問題を作って',
-  '会議の議事録をまとめて',
-  '旅行の持ち物リストを作って',
-  '考えを図（マインドマップ）にして',
-  'この数式をグラフで解説して',
+  'Organize my schedule for today',
+  'Summarize this note in plain language',
+  'Write a polite email',
+  'Translate to English',
+  'Create flashcards for memorization',
+  'Summarize the meeting minutes',
+  'Make a travel packing list',
+  'Turn my ideas into a mind map',
+  'Explain this formula with a graph',
 ];
 
 const SIKUNLILY_SUGGESTIONS = [
-  '複数ファイルのコードプロジェクトを作って',
-  'このドキュメントを分析してまとめて',
-  'このデータのパターンと異常を検出して',
-  '情報源を比較して信頼性を評価して',
+  'Create a multi-file code project',
+  'Analyze and summarize this document',
+  'Detect patterns and anomalies in this data',
+  'Compare sources and evaluate reliability',
 ];
 
 // Tone/style modes: tapping toggles the mode ON; while ON, every message
 // you send is answered in that style (until you tap it off).
 const MODES: { id: string; label: string; directive: string }[] = [
-  { id: 'formal', label: '🎚️ フォーマル', directive: 'フォーマルで丁寧なトーンで答えて。' },
-  { id: 'casual', label: '😊 カジュアル', directive: '親しみやすいカジュアルなトーンで答えて。' },
-  { id: 'concise', label: '⚡ 簡潔に', directive: '要点だけを簡潔に短く答えて。' },
-  { id: 'detailed', label: '📚 くわしく', directive: '背景や具体例も交えて、くわしく丁寧に説明して。' },
-  { id: 'easy', label: '🍼 やさしく', directive: '専門用語を避けて、初心者にもわかるやさしい言葉で説明して。' },
+  { id: 'formal', label: '🎚️ Formal', directive: 'Answer in a formal and polite tone.' },
+  { id: 'casual', label: '😊 Casual', directive: 'Answer in a friendly and casual tone.' },
+  { id: 'concise', label: '⚡ Concise', directive: 'Answer briefly with key points only.' },
+  { id: 'detailed', label: '📚 Detailed', directive: 'Explain thoroughly with background and examples.' },
+  { id: 'easy', label: '🍼 Simple', directive: 'Avoid jargon and explain in beginner-friendly language.' },
 ];
 
 // One-tap actions: sending a prompt immediately.
 const QUICK_ACTIONS: { label: string; prompt: string }[] = [
-  { label: '📧 メール文面', prompt: 'このメモの内容を元に、そのまま送れる丁寧なメールの下書きを作って。件名も付けてね。' },
-  { label: '📝 ブログ案', prompt: 'このメモを元に、ブログ記事のタイトル案を3つと、それぞれの構成案を提案して。' },
-  { label: '🔎 詳しく調べて', prompt: 'このメモに出てくる専門用語や関連トピックを、ネットの情報も使ってもう少し詳しく補足して。' },
+  { label: '📧 Email draft', prompt: 'Based on this note, write a polite email draft ready to send. Include a subject line.' },
+  { label: '📝 Blog ideas', prompt: 'Based on this note, suggest 3 blog post titles and an outline for each.' },
+  { label: '🔎 Research more', prompt: 'Look up the technical terms and related topics in this note in more detail, using web information.' },
 ];
 
 // 英単語帳画像から穴埋め例文を作るプロンプト。画像添付が必要なので
@@ -1853,16 +1853,16 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
 
     const room = MAX_FILES - attachments.length;
     if (room <= 0) {
-      setFileError(`ファイルは合計${MAX_FILES}個までだよ`);
+      setFileError(`Maximum ${MAX_FILES} files allowed.`);
       return;
     }
     if (files.length > room) {
-      setFileError(`ファイルは合計${MAX_FILES}個までだよ（先頭${room}件だけ追加するね）`);
+      setFileError(`Maximum ${MAX_FILES} files allowed (adding only the first ${room})`);
     }
 
     files.slice(0, room).forEach(file => {
       if (file.size > MAX_FILE_BYTES) {
-        setFileError(`「${file.name}」が大きすぎるよ（1ファイル12MBまで）`);
+        setFileError(`"${file.name}" is too large (max 12 MB per file).`);
         return;
       }
       const reader = new FileReader();
@@ -1890,7 +1890,7 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
             );
           } catch (err) {
             setAttachments(prev => prev.filter(a => a.id !== id));
-            setFileError(`「${file.name}」のPDF読み込みに失敗したよ: ${err instanceof Error ? err.message : 'unknown error'}`);
+            setFileError(`Failed to load PDF "${file.name}": ${err instanceof Error ? err.message : 'unknown error'}`);
           }
         } else if (useLargeImageUpload && apiKey) {
           try {
@@ -1900,11 +1900,11 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
             );
           } catch (err) {
             setAttachments(prev => prev.filter(a => a.id !== id));
-            setFileError(`「${file.name}」のアップロードに失敗したよ: ${err instanceof Error ? err.message : 'unknown error'}`);
+            setFileError(`Failed to upload "${file.name}": ${err instanceof Error ? err.message : 'unknown error'}`);
           }
         }
       };
-      reader.onerror = () => setFileError(`「${file.name}」の読み込みに失敗したよ`);
+      reader.onerror = () => setFileError(`Failed to read "${file.name}".`);
       reader.readAsDataURL(file);
     });
   };
@@ -1927,7 +1927,7 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
-      text: userText || (sentAtts.length > 0 ? `(${sentAtts.length}件のファイルを送信)` : ''),
+      text: userText || (sentAtts.length > 0 ? `(${sentAtts.length} file(s) attached)` : ''),
       timestamp: Date.now(),
       attachments: sentAtts.length > 0 ? sentAtts : undefined,
     };
@@ -2005,14 +2005,14 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
           ? ['gemini-2.5-flash-lite', 'gemini-2.5-flash']
           : ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
         const modeLabels: Record<string, string> = {
-          code: 'コードを設計中',
-          arch: 'アーキテクチャを設計中',
-          analysis: 'データを解析中',
-          research: '調査・検証中',
-          study: '学習支援中',
-          organize: 'メモを分析中',
+          code: 'Designing code...',
+          arch: 'Designing architecture...',
+          analysis: 'Analyzing data...',
+          research: 'Researching...',
+          study: 'Learning support...',
+          organize: 'Analyzing notes...',
         };
-        setSikunProgress(budget !== 0 ? '🧠 深く思考中...' : (modeLabels[activeMode ?? ''] ?? '考え中') + '...');
+        setSikunProgress(budget !== 0 ? '🧠 Thinking deeply...' : (modeLabels[activeMode ?? ''] ?? 'Thinking') + '...');
         aiText = await streamSikunlilyChat(
           history,
           sikunSystemPrompt,
@@ -2022,10 +2022,10 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
             onThinkingDelta: (delta) => {
               thinkingAccum += delta;
               setSikunLiveThinking(thinkingAccum);
-              if (budget !== 0) setSikunProgress('🧠 思考中...');
+              if (budget !== 0) setSikunProgress('🧠 Thinking...');
             },
             onResponseDelta: () => {
-              setSikunProgress('✍️ 回答を生成中...');
+              setSikunProgress('✍️ Generating response...');
             },
           },
           sikunModels,
@@ -2051,7 +2051,7 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
         role: 'lily',
         text: textContent || (
           questions.length > 0
-            ? `${questions.map(q => q.question).join('\n')}\n\n下のフォームから教えてね！🐶`
+            ? `${questions.map(q => q.question).join('\n')}\n\nPlease fill in the form below! 🐶`
             : '...'
         ),
         timestamp: Date.now(),
@@ -2066,7 +2066,7 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
         role: 'lily',
-        text: `ごめんね、エラーが起きちゃった 🐶\n${e instanceof Error ? e.message : '不明なエラー'}`,
+        text: `Oops, something went wrong 🐶\n${e instanceof Error ? e.message : 'Unknown error'}`,
         timestamp: Date.now(),
       }]);
     } finally {
@@ -2084,13 +2084,13 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/lily-character.png" alt="Lily" className="setup-lily" />
           </div>
-          <h2 className="setup-title">やあ！Lily だよ 🐶</h2>
+          <h2 className="setup-title">Hey! I'm Lily 🐶</h2>
           <p className="setup-desc">
-            Gemini API キーを設定すると、メモの分析・図やグラフの作成・問題作りをお手伝いできるよ！
+            Set up your Gemini API key and I can help you analyze notes, create diagrams and charts, and make quizzes!
           </p>
           <button className="setup-btn" onClick={onOpenSettings}>
             <Sparkles size={18} />
-            設定してみる
+            Go to settings
           </button>
         </div>
         <style jsx>{`
@@ -2111,7 +2111,7 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
     <div className="ai-chat-container">
       <div className="chat-header">
         {onSwitchTab && (
-          <button className="chat-back-btn" onClick={() => onSwitchTab('memos')} title="メモに戻る">
+          <button className="chat-back-btn" onClick={() => onSwitchTab('memos')} title="Back to notes">
             <ArrowLeft size={20} />
           </button>
         )}
@@ -2124,7 +2124,7 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
           />
           <div>
             <div className="header-title">{activeModel === 'sikunlily' ? 'sikunlily' : 'Lily'}</div>
-            <div className="header-sub">{activeModel === 'sikunlily' ? '開発者用AIアシスタント 🛠️' : 'AIアシスタント ✨'}</div>
+            <div className="header-sub">{activeModel === 'sikunlily' ? 'Developer AI Assistant 🛠️' : 'AI Assistant ✨'}</div>
           </div>
         </div>
         <div className="header-right">
@@ -2136,7 +2136,7 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
               setQuestionQueue([]);
               setCollectedAnswers([]);
             }}
-            title="AIキャラクターを切り替える"
+            title="Switch AI character"
           >
             <span className="model-toggle-dot" />
             {activeModel === 'lily' ? 'Lily' : 'sikunlily'}
@@ -2144,67 +2144,67 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
           <button
             className={`web-toggle eco-toggle ${economy ? 'on' : ''}`}
             onClick={toggleEconomy}
-            title="節約モード: 思考を抑えて軽量モデル(flash-lite)で答え、APIコストを大幅に削減する"
+            title="Economy Mode: disable thinking + use lightweight model to cut API costs by up to 1/20"
           >
             <span style={{ fontSize: '11px' }}>🌱</span>
-            <span className="web-label">節約モード</span>
+            <span className="web-label">Economy</span>
             <span className="web-state">{economy ? 'ON' : 'OFF'}</span>
           </button>
           <button
             className={`web-toggle ${webSearch ? 'on' : ''}`}
             onClick={() => setWebSearch(p => !p)}
-            title="ネット検索をON/OFF。ONにすると最新情報も調べて答えるよ"
+            title="Toggle web search. When ON, answers include the latest information."
           >
             <Search size={13} />
-            <span className="web-label">ネット検索</span>
+            <span className="web-label">Web Search</span>
             <span className="web-state">{webSearch ? 'ON' : 'OFF'}</span>
           </button>
           {activeModel === 'sikunlily' && !economy && (
             <button
               className={`web-toggle deep-research-toggle ${deepResearch ? 'on' : ''}`}
               onClick={() => setDeepResearch(p => !p)}
-              title="Deep Research Pro Preview: 数分かけて深くリサーチしてレポートを作成するよ"
+              title="Deep Research Pro Preview: spends several minutes researching the web and creates a detailed report"
             >
               <Sparkles size={13} />
               <span className="web-label">Deep Research</span>
               <span className="web-state">{deepResearch ? 'ON' : 'OFF'}</span>
             </button>
           )}
-          <button className="context-toggle" onClick={() => setShowContextPanel(p => !p)} title="メモを選択">
+          <button className="context-toggle" onClick={() => setShowContextPanel(p => !p)} title="Select note">
             {activeModel === 'sikunlily' ? (
               <span className={`context-chip${sikunAllNotes || sikunNoteIds.length > 0 ? ' selected' : ''}`}>
-                {sikunAllNotes ? '📚 全メモ参照中' : sikunNoteIds.length > 0 ? `📄 ${sikunNoteIds.length}件選択中` : 'メモを選ぶ'}
+                {sikunAllNotes ? '📚 All notes' : sikunNoteIds.length > 0 ? `📄 ${sikunNoteIds.length} selected` : 'Select note'}
                 {showContextPanel ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
               </span>
             ) : selectedNote ? (
               <span className="context-chip selected">
-                📄 {selectedNote.title || '無題'}
+                📄 {selectedNote.title || 'Untitled'}
                 {showContextPanel ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
               </span>
             ) : (
               <span className="context-chip">
-                メモを選ぶ
+                Select note
                 {showContextPanel ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
               </span>
             )}
           </button>
           {messages.length > 0 && (
-            <button className="clear-btn" onClick={handleSaveChat} title="この会話を保存">
+            <button className="clear-btn" onClick={handleSaveChat} title="Save this conversation">
               <Save size={15} />
             </button>
           )}
-          <button className="clear-btn" onClick={() => setShowHistory(true)} title="保存した会話の履歴">
+          <button className="clear-btn" onClick={() => setShowHistory(true)} title="View saved conversations">
             <History size={15} />
           </button>
           {messages.length > 0 && (
-            <button className="clear-btn" onClick={() => setMessages([])} title="会話をリセット">
+            <button className="clear-btn" onClick={() => setMessages([])} title="Reset conversation">
               <RotateCcw size={15} />
             </button>
           )}
           <button
             className="help-btn"
             onClick={() => { setHelpInitialTab(activeModel === 'sikunlily' ? 'sikunlily' : 'lily'); setShowHelp(true); }}
-            title="使い方ガイド"
+            title="Usage guide"
           >
             <HelpCircle size={16} />
           </button>
@@ -2212,7 +2212,7 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
       </div>
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} initialTab={helpInitialTab} />}
       {showHistory && <ChatHistoryModal onClose={() => setShowHistory(false)} onLoad={handleLoadChat} />}
-      {savedToast && <div className="chat-saved-toast">会話を保存しました ✓</div>}
+      {savedToast && <div className="chat-saved-toast">Conversation saved ✓</div>}
 
       {showContextPanel && activeModel === 'sikunlily' && (
         <div className="context-panel">
@@ -2220,13 +2220,13 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
             className={`note-chip${sikunAllNotes ? ' active' : ''}`}
             onClick={() => { setSikunAllNotes(true); setSikunNoteIds([]); setShowContextPanel(false); }}
           >
-            📚 全メモを参照
+            📚 All notes
           </button>
           <button
             className={`note-chip${!sikunAllNotes && sikunNoteIds.length === 0 ? ' active' : ''}`}
             onClick={() => { setSikunAllNotes(false); setSikunNoteIds([]); setShowContextPanel(false); }}
           >
-            なし
+            None
           </button>
           {allNotes?.map(n => (
             <button
@@ -2239,7 +2239,7 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
                 );
               }}
             >
-              {sikunNoteIds.includes(n.id!) ? '✓ ' : ''}{n.title || '無題のメモ'}
+              {sikunNoteIds.includes(n.id!) ? '✓ ' : ''}{n.title || 'Untitled'}
             </button>
           ))}
         </div>
@@ -2250,7 +2250,7 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
             className={`note-chip ${!selectedNoteId ? 'active' : ''}`}
             onClick={() => { setSelectedNoteId(undefined); setShowContextPanel(false); }}
           >
-            なし
+            None
           </button>
           {allNotes?.map(n => (
             <button
@@ -2258,7 +2258,7 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
               className={`note-chip ${selectedNoteId === n.id ? 'active' : ''}`}
               onClick={() => { setSelectedNoteId(n.id); setShowContextPanel(false); }}
             >
-              {n.title || '無題のメモ'}
+              {n.title || 'Untitled'}
             </button>
           ))}
         </div>
@@ -2277,9 +2277,9 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
             </div>
             <p className="welcome-text">
               {activeModel === 'sikunlily' ? (
-                <>sikunlily だ ⚔️🐕<br />lilyのペット「sikun」と「lily」が合わさった柴犬の武士だ。<br />コード構築・データ解析・調査検証・メモ整理が得意だ。</>
+                <>I'm sikunlily ⚔️🐕<br />Lily's companion — a Shiba Inu samurai merging "sikun" and "lily". Expert in code, data analysis, research, and note organizing.</>
               ) : (
-                <>こんにちは、Lily だよ！🐶<br />メモの要約・翻訳・メール作成・問題づくり・図やグラフの作成まで、文章でお願いするだけ。<br />まずは下の例をタップしてみてね👇</>
+                <>Hi, I'm Lily! 🐶<br />Summarize notes, translate, draft emails, create quizzes, build charts — just type what you need.<br />Try tapping one of the examples below 👇</>
               )}
             </p>
 
@@ -2287,8 +2287,8 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
               className={`welcome-guide-btn${activeModel === 'sikunlily' ? ' siku' : ''}`}
               onClick={() => { setHelpInitialTab(activeModel === 'sikunlily' ? 'sikunlily' : 'lily'); setShowHelp(true); }}
             >
-              <span className="welcome-guide-main"><HelpCircle size={18} /> 使い方ガイドを見る</span>
-              <span className="welcome-guide-sub">できること・料金の目安をチェック</span>
+              <span className="welcome-guide-main"><HelpCircle size={18} /> See usage guide</span>
+              <span className="welcome-guide-sub">Check what I can do & pricing</span>
             </button>
 
             <div className="suggestions">
@@ -2327,7 +2327,7 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
               <div className="siku-thinking-live">
                 <div className="siku-thinking-live-header">
                   <span className="siku-thinking-pulse" />
-                  思考ログ（リアルタイム）
+                  Thinking log (live)
                 </div>
                 <div className="siku-thinking-live-body">{sikunLiveThinking}</div>
               </div>
@@ -2339,71 +2339,71 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
 
       {onSwitchTab && (
         <nav className="ai-bottom-nav">
-          <button className="ai-nav-item" onClick={() => onSwitchTab('memos')}><Book size={22} /><span>メモ</span></button>
-          <button className="ai-nav-item" onClick={() => onSwitchTab('sketch')}><Brush size={22} /><span>落書き</span></button>
+          <button className="ai-nav-item" onClick={() => onSwitchTab('memos')}><Book size={22} /><span>Notes</span></button>
+          <button className="ai-nav-item" onClick={() => onSwitchTab('sketch')}><Brush size={22} /><span>Sketch</span></button>
           <button className="ai-nav-item" onClick={() => onSwitchTab('pdf')}><FileText size={22} /><span>PDF</span></button>
           <button className="ai-nav-item active"><Sparkles size={22} /><span>AI</span></button>
-          <button className="ai-nav-item" onClick={() => { onSwitchTab('settings'); onOpenSettings(); }}><SettingsIcon size={22} /><span>設定</span></button>
+          <button className="ai-nav-item" onClick={() => { onSwitchTab('settings'); onOpenSettings(); }}><SettingsIcon size={22} /><span>Settings</span></button>
         </nav>
       )}
 
       {activeModel === 'sikunlily' ? (
         /* sikunlily: 専門モードトグル */
         <div className="quick-actions mode-row">
-          <span className="qa-label">モード</span>
+          <span className="qa-label">Mode</span>
           <button
             className={`quick-chip mode-chip siku-mode${activeMode === 'code' ? ' on' : ''}`}
             onClick={() => setActiveMode(p => (p === 'code' ? null : 'code'))}
-            title="大規模コード構築モード: gemini-2.5-proで複数ファイルを跨ぐプロジェクトを生成"
+            title="Large-scale code build mode: generates multi-file projects"
           >
-            ⚙️ コード構築{activeMode === 'code' ? ' ✓' : ''}
+            ⚙️ Code Build{activeMode === 'code' ? ' ✓' : ''}
           </button>
           <button
             className={`quick-chip mode-chip siku-mode${activeMode === 'organize' ? ' on' : ''}`}
             onClick={() => setActiveMode(p => (p === 'organize' ? null : 'organize'))}
-            title="メモ整理モード: メモ間の関連性分析・リンク提案・フォルダ整理提案"
+            title="Note organize mode: cross-note analysis, link suggestions, folder organization"
           >
-            🗂️ メモ整理{activeMode === 'organize' ? ' ✓' : ''}
+            🗂️ Organize{activeMode === 'organize' ? ' ✓' : ''}
           </button>
           <button
             className={`quick-chip mode-chip siku-mode${activeMode === 'analysis' ? ' on' : ''}`}
             onClick={() => setActiveMode(p => (p === 'analysis' ? null : 'analysis'))}
-            title="データ解析モード: 非構造化データの統合解析・パターン認識・将来予測"
+            title="Data analysis mode: integrated analysis, pattern recognition, prediction"
           >
-            📊 データ解析{activeMode === 'analysis' ? ' ✓' : ''}
+            📊 Analysis{activeMode === 'analysis' ? ' ✓' : ''}
           </button>
           <button
             className={`quick-chip mode-chip siku-mode${activeMode === 'research' ? ' on' : ''}`}
             onClick={() => setActiveMode(p => (p === 'research' ? null : 'research'))}
-            title="調査・検証モード: 情報源の信頼性評価・矛盾検出・自律的な課題解決"
+            title="Research & verify mode: source reliability, contradiction detection"
           >
-            🔬 調査・検証{activeMode === 'research' ? ' ✓' : ''}
+            🔬 Research{activeMode === 'research' ? ' ✓' : ''}
           </button>
           <button
             className={`quick-chip mode-chip siku-mode${activeMode === 'arch' ? ' on' : ''}`}
             onClick={() => setActiveMode(p => (p === 'arch' ? null : 'arch'))}
-            title="アーキテクチャ設計モード: 要件からシステム構成図を自動生成・テストケース生成・技術選定比較"
+            title="Architecture mode: auto-generate system diagrams, test cases, tech comparison"
           >
-            🏗️ アーキテクチャ{activeMode === 'arch' ? ' ✓' : ''}
+            🏗️ Architect{activeMode === 'arch' ? ' ✓' : ''}
           </button>
           <button
             className={`quick-chip mode-chip siku-mode${activeMode === 'study' ? ' on' : ''}`}
             onClick={() => setActiveMode(p => (p === 'study' ? null : 'study'))}
-            title="学習支援モード: Q&A自動生成・概念マップ・レポート添削・外国語支援・学習パス提案"
+            title="Study mode: Q&A generation, concept maps, essay review, language support"
           >
-            📖 学習支援{activeMode === 'study' ? ' ✓' : ''}
+            📖 Study{activeMode === 'study' ? ' ✓' : ''}
           </button>
         </div>
       ) : (
         /* Lily: トーンモード */
         <div className="quick-actions mode-row">
-          <span className="qa-label">トーン</span>
+          <span className="qa-label">Tone</span>
           {MODES.map(mo => (
             <button
               key={mo.id}
               className={`quick-chip mode-chip${activeMode === mo.id ? ' on' : ''}`}
               onClick={() => setActiveMode(p => (p === mo.id ? null : mo.id))}
-              title="タップでON。次に送るメッセージからこのトーンで答えてくれるよ"
+              title="Tap to enable. The next message will be answered in this tone."
             >
               {mo.label}{activeMode === mo.id ? ' ✓' : ''}
             </button>
@@ -2424,9 +2424,9 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
             className="quick-chip"
             onClick={() => fillInput(ENGLISH_VOCAB_PROMPT)}
             disabled={isLoading}
-            title="英単語帳の画像を添付してから送ると、穴埋め例文を作るよ"
+            title="Attach a vocabulary flashcard image and send to create fill-in-the-blank questions"
           >
-            🔤 英単語帳→問題
+            🔤 Vocab→Quiz
           </button>
         </div>
       )}
@@ -2443,8 +2443,8 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
               ) : (
                 <span className="att-chip-icon">📎</span>
               )}
-              <span className="att-chip-name">{att.uploading ? `${att.name} (アップロード中...)` : att.name}</span>
-              <button className="att-remove" onClick={() => removeAttachment(i)} title="削除"><X size={14} /></button>
+              <span className="att-chip-name">{att.uploading ? `${att.name} (Uploading...)` : att.name}</span>
+              <button className="att-remove" onClick={() => removeAttachment(i)} title="Remove"><X size={14} /></button>
             </div>
           ))}
           {fileError && <span className="att-error">{fileError}</span>}
@@ -2464,14 +2464,14 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
           className="attach-btn"
           onClick={() => fileInputRef.current?.click()}
           disabled={isLoading || attachments.length >= MAX_FILES}
-          title="ファイルを添付（複数可）"
+          title="Attach files (multiple allowed)"
         >
           <Paperclip size={20} />
         </button>
         <textarea
           ref={textareaRef}
           className="chat-input"
-          placeholder={activeModel === 'sikunlily' ? 'sikunlily に話しかける...（Enter で改行 / 送信はボタン）' : 'Lily に話しかける...（Enter で改行 / 送信はボタン）'}
+          placeholder={activeModel === 'sikunlily' ? 'Talk to sikunlily... (Enter for newline, button to send)' : 'Talk to Lily... (Enter for newline, button to send)'}
           value={input}
           onChange={e => { setInput(e.target.value); autoResizeTextarea(); }}
           rows={1}
@@ -2481,7 +2481,7 @@ export default function AIChat({ onOpenSettings, onSwitchTab, onNoteCreated }: A
           className="send-btn"
           onClick={() => sendMessage()}
           disabled={(!input.trim() && attachments.length === 0) || isLoading || attachments.some(a => a.uploading)}
-          title="送信 (Enter)"
+          title="Send (Enter)"
         >
           <Send size={20} />
         </button>

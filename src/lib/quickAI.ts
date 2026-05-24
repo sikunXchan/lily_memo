@@ -15,11 +15,11 @@ export interface QuickActionMeta {
 }
 
 export const QUICK_ACTIONS: QuickActionMeta[] = [
-  { id: 'summary',      emoji: '📝', label: '要約を追加',           description: 'メモを3〜5文に要約して末尾に挿入' },
-  { id: 'proofread',    emoji: '✨', label: '校正版を追加',         description: '誤字脱字・文法を直した版を末尾に挿入' },
-  { id: 'translate_en', emoji: '🌐', label: '英語に翻訳',           description: 'メモを自然な英語にして末尾に挿入' },
-  { id: 'flashcards',   emoji: '🧠', label: 'フラッシュカード生成', description: '重要語を抜き出し単語カード化（学習）' },
-  { id: 'todo',         emoji: '✅', label: 'ToDoを抽出',           description: 'メモ内のアクションをチェックリスト化' },
+  { id: 'summary',      emoji: '📝', label: 'Add summary',        description: 'Summarize note in 3-5 sentences and append' },
+  { id: 'proofread',    emoji: '✨', label: 'Add proofread',      description: 'Append a proofread version with grammar fixes' },
+  { id: 'translate_en', emoji: '🌐', label: 'Translate to English', description: 'Translate note to natural English and append' },
+  { id: 'flashcards',   emoji: '🧠', label: 'Generate flashcards', description: 'Extract key terms as flashcards (for studying)' },
+  { id: 'todo',         emoji: '✅', label: 'Extract to-dos',      description: 'Extract actions from note into a checklist' },
 ];
 
 export interface QAPair {
@@ -131,12 +131,12 @@ export async function runQuickAction(
   switch (action) {
     case 'summary': {
       const html =
-        `<h3>📝 要約</h3>` + textToHtmlParagraphs(raw);
+        `<h3>📝 Summary</h3>` + textToHtmlParagraphs(raw);
       return { kind: 'text', html };
     }
     case 'proofread': {
       const html =
-        `<h3>✨ 校正版</h3>` + textToHtmlParagraphs(raw);
+        `<h3>✨ Proofread</h3>` + textToHtmlParagraphs(raw);
       return { kind: 'text', html };
     }
     case 'translate_en': {
@@ -150,7 +150,7 @@ export async function runQuickAction(
       const pairs: QAPair[] = items
         .filter(it => it && typeof it.q === 'string' && typeof it.a === 'string')
         .map(it => ({ q: it.q.trim(), a: it.a.trim() }));
-      if (pairs.length === 0) throw new Error('フラッシュカードを生成できませんでした');
+      if (pairs.length === 0) throw new Error('Failed to generate flashcards');
       return { kind: 'qa', qaKind: 'flash', pairs };
     }
     case 'todo': {
@@ -158,7 +158,7 @@ export async function runQuickAction(
       const items = Array.isArray(data?.items)
         ? data!.items.map(s => String(s).trim()).filter(Boolean)
         : [];
-      if (items.length === 0) throw new Error('抽出できる ToDo が見つかりませんでした');
+      if (items.length === 0) throw new Error('No to-dos found in this note');
       return { kind: 'tasklist', items };
     }
   }

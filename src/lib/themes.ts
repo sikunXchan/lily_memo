@@ -129,7 +129,7 @@ export const THEMES: Record<string, Theme> = {
   },
 
   starry: {
-    id: 'starry', name: '夜空', tag: 'NIGHT SKY · DEEP',
+    id: 'starry', name: 'Night Sky', tag: 'NIGHT SKY · DEEP',
     bg: '#070b17', surface: '#0d1426', surfaceAlt: '#141c35',
     surfaceDeep: '#1b2448',
     fg: '#dde6f8', fgMuted: '#7b8fb8', fgFaint: '#3d4f78',
@@ -149,7 +149,7 @@ export const THEMES: Record<string, Theme> = {
   },
 
   fireworks: {
-    id: 'fireworks', name: '花火', tag: 'SUMMER · HANABI',
+    id: 'fireworks', name: 'Fireworks', tag: 'SUMMER · HANABI',
     bg: '#0a0a1f', surface: '#14132e', surfaceAlt: '#1d1b40',
     surfaceDeep: '#272357',
     fg: '#f0e9ff', fgMuted: '#9b93c8', fgFaint: '#534d80',
@@ -169,7 +169,7 @@ export const THEMES: Record<string, Theme> = {
   },
 
   flower: {
-    id: 'flower', name: '花畑', tag: 'BLOOM · MEADOW',
+    id: 'flower', name: 'Flower Field', tag: 'BLOOM · MEADOW',
     bg: '#fdf7f4', surface: '#ffffff', surfaceAlt: '#fbeef0',
     surfaceDeep: '#f3e2dd',
     fg: '#3a322e', fgMuted: '#8a7468', fgFaint: '#c2ab9e',
@@ -188,7 +188,7 @@ export const THEMES: Record<string, Theme> = {
   },
 
   library: {
-    id: 'library', name: '図書館', tag: 'COZY · READING',
+    id: 'library', name: 'Library', tag: 'COZY · READING',
     bg: '#1c140d', surface: '#282016', surfaceAlt: '#33281c',
     surfaceDeep: '#42341f',
     fg: '#f1e6d2', fgMuted: '#b09a7a', fgFaint: '#6e5c43',
@@ -225,12 +225,12 @@ export interface FontOption {
 }
 
 export const FONT_OPTIONS: FontOption[] = [
-  { id: 'default', name: 'テーマ標準', value: '' },
-  { id: 'rounded', name: '丸ゴシック', value: 'var(--font-m-plus-rounded), "Noto Sans JP", sans-serif' },
-  { id: 'gothic', name: 'ゴシック', value: 'system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif' },
-  { id: 'mincho', name: '明朝', value: '"Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif' },
-  { id: 'outfit', name: 'モダン', value: 'var(--font-outfit), "Noto Sans JP", sans-serif' },
-  { id: 'mono', name: '等幅', value: 'ui-monospace, "SF Mono", "JetBrains Mono", monospace' },
+  { id: 'default', name: 'Default', value: '' },
+  { id: 'rounded', name: 'Round Gothic', value: 'var(--font-m-plus-rounded), "Noto Sans JP", sans-serif' },
+  { id: 'gothic', name: 'Gothic', value: 'system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif' },
+  { id: 'mincho', name: 'Mincho', value: '"Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif' },
+  { id: 'outfit', name: 'Modern', value: 'var(--font-outfit), "Noto Sans JP", sans-serif' },
+  { id: 'mono', name: 'Monospace', value: 'ui-monospace, "SF Mono", "JetBrains Mono", monospace' },
 ];
 
 export const DEFAULT_FONT_ID = 'default';

@@ -111,7 +111,7 @@ function layoutNodes(
         refId: n.id!,
         x, y, r: 4,
         color: resolveColor(n.color),
-        label: n.title || '無題のメモ',
+        label: n.title || 'Untitled',
       });
     });
     return { nodes, links };
@@ -164,7 +164,7 @@ function layoutNodes(
         refId: n.id!,
         x, y, r: 3.2,
         color: resolveColor(n.color ?? undefined) || fp.color,
-        label: n.title || '無題のメモ',
+        label: n.title || 'Untitled',
       });
       links.push({ ax: fp.x, ay: fp.y, bx: x, by: y });
     });
@@ -181,7 +181,7 @@ function layoutNodes(
       refId: n.id!,
       x, y, r: 3.2,
       color: resolveColor(n.color),
-      label: n.title || '無題のメモ',
+      label: n.title || 'Untitled',
     });
   });
 
@@ -507,17 +507,17 @@ export default function DirectoryGraph({ folders, notes, activeNoteId, onSelectN
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       />
-      <div className="graph-controls" aria-label="ズーム操作">
-        <button className="gc-btn" onClick={zoomInBtn} title="拡大" aria-label="拡大">
+      <div className="graph-controls" aria-label="Zoom controls">
+        <button className="gc-btn" onClick={zoomInBtn} title="Zoom in" aria-label="Zoom in">
           <ZoomIn size={14} />
         </button>
-        <button className="gc-btn gc-label" onClick={resetView} title="リセット">
+        <button className="gc-btn gc-label" onClick={resetView} title="Reset">
           {Math.round(view.scale * 100)}%
         </button>
-        <button className="gc-btn" onClick={zoomOutBtn} title="縮小" aria-label="縮小">
+        <button className="gc-btn" onClick={zoomOutBtn} title="Zoom out" aria-label="Zoom out">
           <ZoomOut size={14} />
         </button>
-        <button className="gc-btn" onClick={resetView} title="全体表示" aria-label="全体表示">
+        <button className="gc-btn" onClick={resetView} title="Fit all" aria-label="Fit all">
           <Maximize size={14} />
         </button>
       </div>

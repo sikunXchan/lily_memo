@@ -136,7 +136,7 @@ export default function SplashScreen() {
   if (!scene) return null;
 
   return (
-    <div className={`splash ${closing ? 'closing' : ''}`} onClick={dismiss} role="button" aria-label="はじめる">
+    <div className={`splash ${closing ? 'closing' : ''}`} onClick={dismiss} role="button" aria-label="Get started">
 
       {/* Aurora gradient background */}
       <div className="aurora" />
@@ -214,7 +214,7 @@ export default function SplashScreen() {
       </div>
 
       {/* Tap hint */}
-      <div className="tap-hint">✨ タップしてはじめる ✨</div>
+      <div className="tap-hint">✨ Tap to get started ✨</div>
 
       <style jsx>{`
         .splash {

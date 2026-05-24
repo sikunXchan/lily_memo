@@ -197,7 +197,7 @@ export default function HandwritingCanvas({ value, onChange, readOnly = false }:
   const clearAll = () => {
     if (readOnly) return;
     if (docRef.current.strokes.length === 0) return;
-    if (!confirm('すべて消去しますか？')) return;
+    if (!confirm('Clear all?')) return;
     const next: HandwritingDoc = { ...docRef.current, strokes: [] };
     docRef.current = next;
     onChange(next);
@@ -245,14 +245,14 @@ export default function HandwritingCanvas({ value, onChange, readOnly = false }:
           <button
             className={`hw-btn ${tool === 'pen' ? 'active' : ''}`}
             onClick={() => setTool('pen')}
-            title="ペン"
+            title="Pen"
           >
             <Pencil size={16} />
           </button>
           <button
             className={`hw-btn ${tool === 'eraser' ? 'active' : ''}`}
             onClick={() => setTool('eraser')}
-            title="消しゴム"
+            title="Eraser"
           >
             <Eraser size={16} />
           </button>
@@ -264,7 +264,7 @@ export default function HandwritingCanvas({ value, onChange, readOnly = false }:
                 className={`hw-color ${color === c ? 'active' : ''}`}
                 style={{ background: c }}
                 onClick={() => { setColor(c); setTool('pen'); }}
-                aria-label={`色 ${c}`}
+                aria-label={`Color ${c}`}
               />
             ))}
           </div>
@@ -275,24 +275,24 @@ export default function HandwritingCanvas({ value, onChange, readOnly = false }:
                 key={w}
                 className={`hw-width ${width === w ? 'active' : ''}`}
                 onClick={() => { setWidth(w); setTool('pen'); }}
-                aria-label={`太さ ${w}`}
+                aria-label={`Size ${w}`}
               >
                 <span style={{ width: w * 2.5, height: w * 2.5, background: color }} />
               </button>
             ))}
           </div>
           <div className="hw-divider" />
-          <button className="hw-btn" onClick={undo} title="一手戻す"><Undo2 size={16} /></button>
-          <button className="hw-btn" onClick={clearAll} title="全消去"><Trash2 size={16} /></button>
+          <button className="hw-btn" onClick={undo} title="Undo"><Undo2 size={16} /></button>
+          <button className="hw-btn" onClick={clearAll} title="Clear all"><Trash2 size={16} /></button>
           <div className="hw-divider" />
-          <button className="hw-btn" onClick={zoomOut} title="縮小"><ZoomOut size={16} /></button>
-          <button className="hw-btn hw-zoom-label" onClick={resetZoom} title="表示倍率をリセット">
+          <button className="hw-btn" onClick={zoomOut} title="Zoom out"><ZoomOut size={16} /></button>
+          <button className="hw-btn hw-zoom-label" onClick={resetZoom} title="Reset zoom">
             {Math.round(displayScale * 100)}%
           </button>
-          <button className="hw-btn" onClick={zoomIn} title="拡大"><ZoomIn size={16} /></button>
+          <button className="hw-btn" onClick={zoomIn} title="Zoom in"><ZoomIn size={16} /></button>
           <div className="hw-divider" />
-          <button className="hw-btn" onClick={extendPage} title="下にページ追加"><Plus size={16} /></button>
-          <button className="hw-btn" onClick={toggleFullscreen} title={isFullscreen ? '全画面解除' : '全画面で編集'}>
+          <button className="hw-btn" onClick={extendPage} title="Add page below"><Plus size={16} /></button>
+          <button className="hw-btn" onClick={toggleFullscreen} title={isFullscreen ? 'Exit fullscreen' : 'Edit fullscreen'}>
             {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
           </button>
         </div>

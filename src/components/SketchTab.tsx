@@ -343,7 +343,7 @@ export default function SketchTab({ onClose }: SketchTabProps) {
 
   const clearAll = () => {
     if (strokesRef.current.length === 0) return;
-    if (!confirm('落書きをすべて消去しますか？')) return;
+    if (!confirm('Clear all drawings?')) return;
     strokesRef.current = [];
     redoRef.current = [];
     redraw();
@@ -369,7 +369,7 @@ export default function SketchTab({ onClose }: SketchTabProps) {
         <div className="sketch-toolbar">
           {onClose && (
             <>
-              <button className="sk-btn sk-back" onClick={onClose} title="戻る">
+              <button className="sk-btn sk-back" onClick={onClose} title="Back">
                 <ArrowLeft size={16} />
               </button>
               <div className="sk-divider" />
@@ -378,14 +378,14 @@ export default function SketchTab({ onClose }: SketchTabProps) {
           <button
             className={`sk-btn ${tool === 'pen' ? 'active' : ''}`}
             onClick={() => setTool('pen')}
-            title="ペン"
+            title="Pen"
           >
             <Pencil size={16} />
           </button>
           <button
             className={`sk-btn ${tool === 'eraser' ? 'active' : ''}`}
             onClick={() => setTool('eraser')}
-            title="消しゴム"
+            title="Eraser"
           >
             <Eraser size={16} />
           </button>
@@ -397,7 +397,7 @@ export default function SketchTab({ onClose }: SketchTabProps) {
                 className={`sk-color ${color === c ? 'active' : ''}`}
                 style={{ background: c }}
                 onClick={() => { setColor(c); setTool('pen'); }}
-                aria-label={`色 ${c}`}
+                aria-label={`Color ${c}`}
               />
             ))}
           </div>
@@ -408,40 +408,40 @@ export default function SketchTab({ onClose }: SketchTabProps) {
                 key={w}
                 className={`sk-width ${width === w ? 'active' : ''}`}
                 onClick={() => { setWidth(w); setTool('pen'); }}
-                aria-label={`太さ ${w}`}
+                aria-label={`Size ${w}`}
               >
                 <span style={{ width: w * 2.2, height: w * 2.2, background: color }} />
               </button>
             ))}
           </div>
           <div className="sk-divider" />
-          <button className="sk-btn" onClick={undo} title="一手戻す">
+          <button className="sk-btn" onClick={undo} title="Undo">
             <Undo2 size={16} />
           </button>
-          <button className="sk-btn" onClick={redo} title="やり直し">
+          <button className="sk-btn" onClick={redo} title="Redo">
             <Redo2 size={16} />
           </button>
-          <button className="sk-btn sk-danger" onClick={clearAll} title="全消去">
+          <button className="sk-btn sk-danger" onClick={clearAll} title="Clear all">
             <Trash2 size={16} />
           </button>
           <div className="sk-divider" />
-          <button className="sk-btn" onClick={zoomOut} title="縮小">
+          <button className="sk-btn" onClick={zoomOut} title="Zoom out">
             <ZoomOut size={16} />
           </button>
-          <button className="sk-btn sk-label" onClick={resetView} title="表示倍率をリセット">
+          <button className="sk-btn sk-label" onClick={resetView} title="Reset zoom">
             {Math.round(view.scale * 100)}%
           </button>
-          <button className="sk-btn" onClick={zoomIn} title="拡大">
+          <button className="sk-btn" onClick={zoomIn} title="Zoom in">
             <ZoomIn size={16} />
           </button>
-          <button className="sk-btn" onClick={resetView} title="全体表示">
+          <button className="sk-btn" onClick={resetView} title="Fit view">
             <Maximize size={16} />
           </button>
           <div className="sk-divider" />
           <button
             className={`sk-btn ${penOnly ? 'active' : ''}`}
             onClick={() => setPenOnly(v => !v)}
-            title={penOnly ? 'ペン専用モード ON（指でスクロール）' : 'ペン専用モード OFF（指でも描画）'}
+            title={penOnly ? 'Pen-only mode ON (scroll with finger)' : 'Pen-only mode OFF (finger draws too)'}
           >
             {penOnly ? <Hand size={16} /> : <Fingerprint size={16} />}
           </button>
@@ -458,8 +458,8 @@ export default function SketchTab({ onClose }: SketchTabProps) {
           />
           <div className="sketch-hint">
             {penOnly
-              ? 'ペンで描画 / 指でスクロール・ピンチズーム'
-              : (tool === 'pen' ? '指やペンで自由に描けます' : 'タップでストロークを消去')}
+              ? 'Draw with pen / Scroll & pinch-zoom with finger'
+              : (tool === 'pen' ? 'Draw freely with finger or pen' : 'Tap to erase strokes')}
           </div>
         </div>
       </div>

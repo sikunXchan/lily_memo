@@ -125,7 +125,7 @@ export default function SearchModal({ isOpen, onClose, onSelectNote }: SearchMod
             type="text"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="検索..."
+            placeholder="Search..."
             autoComplete="off"
             spellCheck={false}
           />
@@ -141,11 +141,11 @@ export default function SearchModal({ isOpen, onClose, onSelectNote }: SearchMod
 
         <div className="results-area">
           {!trimmedQuery && (
-            <div className="hint">キーワードを入力してメモを検索 / Escで閉じる</div>
+            <div className="hint">Type to search notes / Esc to close</div>
           )}
 
           {trimmedQuery && searchResults.length === 0 && (
-            <div className="no-results">「{trimmedQuery}」は見つからなかった</div>
+            <div className="no-results">No results for "{trimmedQuery}"</div>
           )}
 
           {trimmedQuery && searchResults.length > 0 && (
@@ -162,7 +162,7 @@ export default function SearchModal({ isOpen, onClose, onSelectNote }: SearchMod
                       }}
                     >
                       <span className="result-title">
-                        {highlightText(note.title || '無題', trimmedQuery)}
+                        {highlightText(note.title || 'Untitled', trimmedQuery)}
                       </span>
                       {snippet && (
                         <span className="result-snippet">

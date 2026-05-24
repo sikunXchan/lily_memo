@@ -73,33 +73,33 @@ export default function SettingsModal({ onClose: _onClose }: SettingsModalProps)
       try {
         const text = event.target?.result;
         if (typeof text !== 'string') throw new Error('Failed to read file content');
-        if (!confirm('現在のデータを上書きしてバックアップを復元しますか？')) return;
+        if (!confirm('Restore backup and overwrite current data?')) return;
         await restoreBackupFromJson(text);
-        alert('復元が完了しました。ページを再読み込みします。');
+        alert('Restore complete. Reloading the page.');
         window.location.reload();
       } catch (err) {
         console.error('Backup restore error:', err);
-        alert('バックアップファイルの読み込みに失敗しました。');
+        alert('Failed to read backup file.');
       }
     };
-    reader.onerror = () => alert('ファイルの読み込みに失敗しました。');
+    reader.onerror = () => alert('Failed to read file.');
     reader.readAsText(file, 'UTF-8');
   };
 
   return (
     <div className="settings-view">
       <header className="settings-header">
-        <h2>設定</h2>
+        <h2>Settings</h2>
       </header>
 
       <div className="settings-sections">
         <section className="settings-section">
           <div className="section-title">
             <Palette size={20} />
-            <h3>テーマ</h3>
+            <h3>Theme</h3>
           </div>
           <div className="section-content">
-            <p className="desc">アプリ全体の配色を切り替えます。「夜空」は星空の背景になります。</p>
+            <p className="desc">Switch the app color scheme. "Night Sky" shows a starry background.</p>
             <div className="option-grid">
               {THEME_LIST.map(id => {
                 const t = THEMES[id];
@@ -124,10 +124,10 @@ export default function SettingsModal({ onClose: _onClose }: SettingsModalProps)
         <section className="settings-section">
           <div className="section-title">
             <Type size={20} />
-            <h3>フォント</h3>
+            <h3>Font</h3>
           </div>
           <div className="section-content">
-            <p className="desc">アプリ全体の文字の書体を選べます。</p>
+            <p className="desc">Choose the typeface used throughout the app.</p>
             <div className="option-grid">
               {FONT_OPTIONS.map(f => (
                 <button
@@ -139,7 +139,7 @@ export default function SettingsModal({ onClose: _onClose }: SettingsModalProps)
                     className="font-preview"
                     style={{ fontFamily: f.value || 'inherit' }}
                   >
-                    あA
+                    Aa
                   </span>
                   <span className="option-name">{f.name}</span>
                 </button>
@@ -151,10 +151,10 @@ export default function SettingsModal({ onClose: _onClose }: SettingsModalProps)
         <section className="settings-section">
           <div className="section-title">
             <Sparkles size={20} />
-            <h3>AIアシスタント (Lily)</h3>
+            <h3>AI Assistant (Lily)</h3>
           </div>
           <div className="section-content">
-            <p className="desc">Gemini APIキーを設定すると、Lilyがメモの分析・図の作成・問題作りをお手伝いします。</p>
+            <p className="desc">Set your Gemini API key to let Lily help with note analysis, diagrams, and quiz creation.</p>
             <div className="api-key-wrap">
               <input
                 type={showKey ? 'text' : 'password'}
@@ -164,12 +164,12 @@ export default function SettingsModal({ onClose: _onClose }: SettingsModalProps)
                 onChange={e => setGeminiKey(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') saveGeminiKey(); }}
               />
-              <button className="show-key-btn" onClick={() => setShowKey(p => !p)} title={showKey ? '隠す' : '表示'}>
+              <button className="show-key-btn" onClick={() => setShowKey(p => !p)} title={showKey ? 'Hide' : 'Show'}>
                 {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
             <button className={`btn-action ${keySaved ? 'saved' : ''}`} onClick={saveGeminiKey}>
-              {keySaved ? '✓ 保存しました' : '保存する'}
+              {keySaved ? '✓ Saved' : 'Save'}
             </button>
           </div>
         </section>
@@ -177,15 +177,15 @@ export default function SettingsModal({ onClose: _onClose }: SettingsModalProps)
         <section className="settings-section">
           <div className="section-title">
             <Sparkles size={20} />
-            <h3>sikun（常駐アシスタント）</h3>
+            <h3>sikun (Always-on assistant)</h3>
           </div>
           <div className="section-content">
             <p className="desc">
-              ONにすると、どの画面でも上部にsikunのアイコンが現れて、タップで話しかけられるよ。<br />
-              長押しでアイコンの位置を動かせる。会話パネルを開いてもメモ編集やタブ切り替えはそのままできるから、作業を止めなくていい。
+              When enabled, sikun's icon appears at the top of every screen — tap to chat.<br />
+              Long-press to reposition it. The chat panel stays open while you edit notes or switch tabs.
             </p>
             <div className="toggle-row">
-              <span className="toggle-state">{sikunEnabled ? '有効' : '無効'}</span>
+              <span className="toggle-state">{sikunEnabled ? 'On' : 'Off'}</span>
               <button
                 className={`toggle-switch ${sikunEnabled ? 'on' : ''}`}
                 onClick={toggleSikun}
@@ -199,12 +199,12 @@ export default function SettingsModal({ onClose: _onClose }: SettingsModalProps)
 
             {sikunEnabled && (
               <>
-                <p className="desc" style={{ marginTop: 20, marginBottom: 10 }}>口調を選べるよ。</p>
+                <p className="desc" style={{ marginTop: 20, marginBottom: 10 }}>Choose speaking style.</p>
                 <div className="option-grid">
                   {[
-                    { id: 'tame', name: 'タメ口', tag: 'デフォルト' },
-                    { id: 'keigo', name: '敬語', tag: 'ていねい' },
-                    { id: 'casual', name: 'カジュアル', tag: '絵文字あり' },
+                    { id: 'tame', name: 'Casual', tag: 'Default' },
+                    { id: 'keigo', name: 'Formal', tag: 'Polite' },
+                    { id: 'casual', name: 'Emoji', tag: 'Fun' },
                   ].map(t => (
                     <button
                       key={t.id}
@@ -224,22 +224,22 @@ export default function SettingsModal({ onClose: _onClose }: SettingsModalProps)
         <section className="settings-section">
           <div className="section-title">
             <Download size={20} />
-            <h3>バックアップと復元</h3>
+            <h3>Backup &amp; Restore</h3>
           </div>
           <div className="section-content">
             <div className="status-badge">
               <div className={`dot ${isPersisted ? 'persisted' : ''}`} />
-              <span>ストレージ永続化: {isPersisted ? '有効（安全）' : '標準'}</span>
+              <span>Storage persistence: {isPersisted ? 'Enabled (safe)' : 'Standard'}</span>
             </div>
-            <p className="desc">手元にローカルコピーを残したい時にどうぞ。別の端末でもこのファイルを取り込めば同じ内容を見られます。</p>
+            <p className="desc">Keep a local copy for safekeeping. Import it on another device to sync your notes.</p>
             <div className="action-group">
               <button className="btn-action" onClick={downloadBackup}>
                 <Download size={18} />
-                バックアップをダウンロード
+                Download backup
               </button>
               <label className="btn-action outline">
                 <Upload size={18} />
-                復元ファイルをアップロード
+                Upload backup file
                 <input type="file" hidden onChange={uploadBackup} accept=".json,application/json" />
               </label>
             </div>

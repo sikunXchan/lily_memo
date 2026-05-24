@@ -27,18 +27,18 @@ export function noteHtmlToText(html: string): string {
 
   doc.querySelectorAll('div[data-type="mermaid"]').forEach(el => {
     const code = el.getAttribute('content') || '';
-    el.replaceWith(doc.createTextNode(`\n[Mermaid図]\n${code}\n`));
+    el.replaceWith(doc.createTextNode(`\n[Mermaid diagram]\n${code}\n`));
   });
 
   doc.querySelectorAll('div[data-type="chart"]').forEach(el => {
     const code = el.getAttribute('code') || '';
-    const type = el.getAttribute('type') || 'グラフ';
-    el.replaceWith(doc.createTextNode(`\n[グラフ (${type})]\n${code}\n`));
+    const type = el.getAttribute('type') || 'Chart';
+    el.replaceWith(doc.createTextNode(`\n[Chart (${type})]\n${code}\n`));
   });
 
   doc.querySelectorAll('div[data-type="geometry"]').forEach(el => {
     const code = el.getAttribute('data-code') || '';
-    el.replaceWith(doc.createTextNode(`\n[幾何の図 (JSON)]\n${code}\n`));
+    el.replaceWith(doc.createTextNode(`\n[Geometry (JSON)]\n${code}\n`));
   });
 
   doc.querySelectorAll('div[data-type="qa"]').forEach(el => {
@@ -49,9 +49,9 @@ export function noteHtmlToText(html: string): string {
       pairs = [];
     }
     const txt = pairs
-      .map((p, i) => `Q${i + 1}: ${p.q} [${p.checked ? '✓ 済' : '未'}]\nA${i + 1}: ${p.a}`)
+      .map((p, i) => `Q${i + 1}: ${p.q} [${p.checked ? '✓ done' : 'pending'}]\nA${i + 1}: ${p.a}`)
       .join('\n');
-    el.replaceWith(doc.createTextNode(`\n[Q&A 問題集]\n${txt}\n`));
+    el.replaceWith(doc.createTextNode(`\n[Q&A Quiz]\n${txt}\n`));
   });
 
   const text = doc.body.textContent || '';

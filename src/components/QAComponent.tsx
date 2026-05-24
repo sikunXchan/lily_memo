@@ -44,11 +44,11 @@ function parseNumberedText(text: string): string[] {
 
 const KIND_LABEL: Record<string, string> = {
   qa: 'Q&A',
-  fill: '穴埋め問題',
-  order: '並べ替え問題',
-  choice: '選択問題',
-  truefalse: '○×問題',
-  flash: '単語カード',
+  fill: 'Fill-in',
+  order: 'Ordering',
+  choice: 'Multiple choice',
+  truefalse: 'True/False',
+  flash: 'Flashcard',
 };
 
 const norm = (s: string) =>
@@ -172,10 +172,10 @@ function QACard({
           {done && (
             <div className="qa-feedback">
               {pickedIdx >= 0 && (pickedIdx === correctIdx
-                ? <span className="ok">正解！🎉</span>
-                : <span className="ng">不正解…</span>)}
+                ? <span className="ok">Correct! 🎉</span>
+                : <span className="ng">Incorrect…</span>)}
               <span className="qa-ans">
-                答え: {correctIdx >= 0 ? `${LBL[correctIdx]}. ${options[correctIdx]}` : pair.a}
+                Answer: {correctIdx >= 0 ? `${LBL[correctIdx]}. ${options[correctIdx]}` : pair.a}
               </span>
             </div>
           )}
@@ -212,9 +212,9 @@ function QACard({
         {(tf != null || show) && (
           <div className="qa-feedback">
             {tf != null && (tf === truth
-              ? <span className="ok">正解！🎉</span>
-              : <span className="ng">不正解…</span>)}
-            <span className="qa-ans">答え: {pair.a}</span>
+              ? <span className="ok">Correct! 🎉</span>
+              : <span className="ng">Incorrect…</span>)}
+            <span className="qa-ans">Answer: {pair.a}</span>
           </div>
         )}
         <CardStyles />
@@ -259,9 +259,9 @@ function QACard({
           </div>
           <div className="qa-feedback">
             {!submitted && !revealAll && (
-              <button className="qa-mini-btn" onClick={check}>答え合わせ</button>
+              <button className="qa-mini-btn" onClick={check}>Check answer</button>
             )}
-            {(submitted || show) && <span className="qa-ans">答え: {pair.a}</span>}
+            {(submitted || show) && <span className="qa-ans">Answer: {pair.a}</span>}
           </div>
           <CardStyles />
         </div>
@@ -300,7 +300,7 @@ function QACard({
           {header}
           <div className="qa-order-tray">
             {built.length === 0
-              ? <span className="qa-order-hint">下の項目を正しい順にタップ</span>
+              ? <span className="qa-order-hint">Tap items in the correct order</span>
               : built.map((x, i) => (
                   <span key={i} className="qa-order-chip filled">{i + 1}. {x}</span>
                 ))}
@@ -319,18 +319,18 @@ function QACard({
           </div>
           <div className="qa-feedback">
             {ordSel.length > 0 && !revealAll && (
-              <button className="qa-mini-btn" onClick={() => setOrdSel([])}>リセット</button>
+              <button className="qa-mini-btn" onClick={() => setOrdSel([])}>Reset</button>
             )}
             {built.length === items.length && (
               correct
-                ? <span className="ok">正解！🎉</span>
-                : <span className="ng">不正解…</span>
+                ? <span className="ok">Correct! 🎉</span>
+                : <span className="ng">Incorrect…</span>
             )}
             {(revealAll || built.length === items.length || revealed) && (
-              <span className="qa-ans">答え: {pair.a}</span>
+              <span className="qa-ans">Answer: {pair.a}</span>
             )}
             {!revealAll && built.length !== items.length && (
-              <button className="qa-mini-btn ghost" onClick={() => setRevealed(true)}>答えを見る</button>
+              <button className="qa-mini-btn ghost" onClick={() => setRevealed(true)}>Show answer</button>
             )}
           </div>
           <CardStyles />
@@ -354,7 +354,7 @@ function QACard({
           disabled={revealAll}
         >
           <span className="qa-flash-face">{open ? pair.a : pair.q}</span>
-          <span className="qa-flash-tag">{open ? '答え（タップで戻る）' : 'タップで答え'}</span>
+          <span className="qa-flash-tag">{open ? 'Answer (tap to flip back)' : 'Tap to reveal'}</span>
         </button>
         <CardStyles />
       </div>
@@ -369,7 +369,7 @@ function QACard({
         className={`qa-answer-btn ${show ? 'revealed' : ''}`}
         onClick={() => setRevealed(r => !r)}
       >
-        {show ? pair.a : '答えを見る ▶'}
+        {show ? pair.a : 'Show answer ▶'}
       </button>
       <CardStyles />
     </div>
@@ -463,35 +463,35 @@ export default function QAComponent({ node: { attrs }, updateAttributes }: React
     return (
       <NodeViewWrapper className="qa-wrapper">
         <div className="qa-editor" contentEditable={false}>
-          <div className="qa-editor-header">{kindLabel} 読み込み</div>
+          <div className="qa-editor-header">{kindLabel} — Import</div>
           <div className="qa-editor-body">
-            <label className="qa-label">問題をペースト</label>
+            <label className="qa-label">Paste questions</label>
             <textarea
               className="qa-textarea"
               value={qText}
               onChange={e => setQText(e.target.value)}
               onKeyDown={e => e.stopPropagation()}
               onWheel={e => e.stopPropagation()}
-              placeholder={'1.LSIとして挙げられるものは？2.次の問題...'}
+              placeholder={'1. What are examples of LSI? 2. Next question...'}
             />
-            <label className="qa-label">答えをペースト</label>
+            <label className="qa-label">Paste answers</label>
             <textarea
               className="qa-textarea"
               value={aText}
               onChange={e => setAText(e.target.value)}
               onKeyDown={e => e.stopPropagation()}
               onWheel={e => e.stopPropagation()}
-              placeholder={'1.(例)プロセッサ2.立ち上げ...'}
+              placeholder={'1. (e.g.) Processor 2. Boot...'}
             />
           </div>
           <div className="qa-editor-actions">
             {pairs.length > 0 && (
               <button className="qa-btn-cancel" onClick={() => setIsEditing(false)}>
-                キャンセル
+                Cancel
               </button>
             )}
             <button className="qa-btn-insert" onClick={handleInsert}>
-              挿入する
+              Insert
             </button>
           </div>
         </div>
@@ -581,16 +581,16 @@ export default function QAComponent({ node: { attrs }, updateAttributes }: React
       <div className="qa-block" contentEditable={false}>
         <div className="qa-block-header">
           <span className="qa-block-title">
-            {kindLabel} <span className="qa-count">{pairs.length}問</span>
+            {kindLabel} <span className="qa-count">{pairs.length} Q</span>
             {checkedCount > 0 && (
               <span className={`qa-progress-badge${checkedCount === pairs.length ? ' done' : ''}`}>
-                {checkedCount}/{pairs.length} 完了
+                {checkedCount}/{pairs.length} done
               </span>
             )}
           </span>
           <div className="qa-block-header-actions">
             <button className="qa-action-btn" onClick={toggleRevealAll}>
-              {revealAll ? '答えを隠す' : '答え合わせ'}
+              {revealAll ? 'Hide answers' : 'Check answers'}
             </button>
             <button
               className="qa-action-btn"
@@ -600,7 +600,7 @@ export default function QAComponent({ node: { attrs }, updateAttributes }: React
                 setIsEditing(true);
               }}
             >
-              編集
+              Edit
             </button>
           </div>
         </div>

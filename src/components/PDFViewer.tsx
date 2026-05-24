@@ -232,7 +232,7 @@ export default function PDFViewer({ embedded = false }: PDFViewerProps) {
       setTotalPages(doc.numPages);
     } catch (e) {
       if ((e as Error)?.name !== 'RenderingCancelledException')
-        setError('PDFを読み込めませんでした。URLを確認するか、ファイルを直接アップロードしてください。');
+        setError('Failed to load PDF. Please check the URL or upload the file directly.');
     } finally {
       setIsLoading(false);
     }
@@ -577,42 +577,42 @@ export default function PDFViewer({ embedded = false }: PDFViewerProps) {
         {/* Top bar */}
         {!isAppFullscreen && <div className="pdf-top-bar">
           <button className="pdf-text-btn" onClick={closePDF}>
-            <X size={16} /><span>閉じる</span>
+            <X size={16} /><span>Close</span>
           </button>
           <div className="pdf-nav-group">
-            <button className="pdf-icon-btn" onClick={() => setCurrentPage(p => Math.max(1, p-1))} disabled={currentPage <= 1 || !hasPDF} title="前のページ (←)">
+            <button className="pdf-icon-btn" onClick={() => setCurrentPage(p => Math.max(1, p-1))} disabled={currentPage <= 1 || !hasPDF} title="Previous page (←)">
               <ChevronLeft size={20} />
             </button>
             <span className="pdf-page-label">{hasPDF ? `${currentPage} / ${totalPages}` : '–'}</span>
-            <button className="pdf-icon-btn" onClick={() => setCurrentPage(p => Math.min(totalPages, p+1))} disabled={currentPage >= totalPages || !hasPDF} title="次のページ (→)">
+            <button className="pdf-icon-btn" onClick={() => setCurrentPage(p => Math.min(totalPages, p+1))} disabled={currentPage >= totalPages || !hasPDF} title="Next page (→)">
               <ChevronRight size={20} />
             </button>
           </div>
           <div className="pdf-zoom-group">
-            <button className="pdf-icon-btn" onClick={() => setZoomIndex(i => Math.max(0, i-1))} disabled={zoomIndex === 0} title="縮小">
+            <button className="pdf-icon-btn" onClick={() => setZoomIndex(i => Math.max(0, i-1))} disabled={zoomIndex === 0} title="Zoom out">
               <ZoomOut size={18} />
             </button>
             <span className="pdf-zoom-label">{Math.round(scale * 100)}%</span>
-            <button className="pdf-icon-btn" onClick={() => setZoomIndex(i => Math.min(ZOOM_LEVELS.length-1, i+1))} disabled={zoomIndex === ZOOM_LEVELS.length-1} title="拡大">
+            <button className="pdf-icon-btn" onClick={() => setZoomIndex(i => Math.min(ZOOM_LEVELS.length-1, i+1))} disabled={zoomIndex === ZOOM_LEVELS.length-1} title="Zoom in">
               <ZoomIn size={18} />
             </button>
           </div>
           <div className="pdf-bar-right">
-            <button className={`pdf-icon-btn${annotationMode === 'highlight' ? ' active' : ''}`} onClick={() => setAnnotationMode(m => m === 'highlight' ? 'none' : 'highlight')} title="ハイライト">
+            <button className={`pdf-icon-btn${annotationMode === 'highlight' ? ' active' : ''}`} onClick={() => setAnnotationMode(m => m === 'highlight' ? 'none' : 'highlight')} title="Highlight">
               <Highlighter size={18} />
             </button>
-            <button className={`pdf-icon-btn${annotationMode === 'pen' ? ' active' : ''}`} onClick={() => setAnnotationMode(m => m === 'pen' ? 'none' : 'pen')} title="ペン手書き">
+            <button className={`pdf-icon-btn${annotationMode === 'pen' ? ' active' : ''}`} onClick={() => setAnnotationMode(m => m === 'pen' ? 'none' : 'pen')} title="Pen drawing">
               <Pencil size={18} />
             </button>
-            <button className={`pdf-icon-btn${showTimer ? ' active' : ''}`} onClick={() => { setShowTimer(v => !v); setTimerCollapsed(false); }} title="タイマー">
+            <button className={`pdf-icon-btn${showTimer ? ' active' : ''}`} onClick={() => { setShowTimer(v => !v); setTimerCollapsed(false); }} title="Timer">
               <Clock size={18} />
             </button>
             {openUrl && (
-              <a href={openUrl} target="_blank" rel="noopener noreferrer" className="pdf-icon-btn" title="新しいタブで開く">
+              <a href={openUrl} target="_blank" rel="noopener noreferrer" className="pdf-icon-btn" title="Open in new tab">
                 <ExternalLink size={18} />
               </a>
             )}
-            <button className="pdf-icon-btn" onClick={() => setIsAppFullscreen(true)} title="全画面表示">
+            <button className="pdf-icon-btn" onClick={() => setIsAppFullscreen(true)} title="Fullscreen">
               <Maximize2 size={18} />
             </button>
           </div>
@@ -620,7 +620,7 @@ export default function PDFViewer({ embedded = false }: PDFViewerProps) {
 
         {/* Fullscreen exit button */}
         {isAppFullscreen && (
-          <button className="pdf-fullscreen-exit" onClick={() => setIsAppFullscreen(false)} title="全画面を終了">
+          <button className="pdf-fullscreen-exit" onClick={() => setIsAppFullscreen(false)} title="Exit fullscreen">
             <Minimize2 size={20} />
           </button>
         )}
@@ -630,10 +630,10 @@ export default function PDFViewer({ embedded = false }: PDFViewerProps) {
           <div className="annotation-bar">
             <div className="ann-mode-tabs">
               <button className={`ann-tab${annotationMode === 'highlight' ? ' active' : ''}`} onClick={() => setAnnotationMode('highlight')}>
-                <Highlighter size={13} /> ハイライト
+                <Highlighter size={13} /> Highlight
               </button>
               <button className={`ann-tab${annotationMode === 'pen' ? ' active' : ''}`} onClick={() => setAnnotationMode('pen')}>
-                <Pencil size={13} /> ペン
+                <Pencil size={13} /> Pen
               </button>
             </div>
 
@@ -656,7 +656,7 @@ export default function PDFViewer({ embedded = false }: PDFViewerProps) {
                 <div className="pen-widths">
                   {PEN_WIDTHS.map((w, i) => (
                     <button key={w} className={`pen-width-btn${penWidthIdx === i ? ' active' : ''}`}
-                      onClick={() => setPenWidthIdx(i)} title={['細','中','太'][i]}>
+                      onClick={() => setPenWidthIdx(i)} title={['Thin','Medium','Thick'][i]}>
                       <span className="pen-dot" style={{ width: 4+i*4, height: 4+i*4, background: PEN_COLORS[penColorIdx] }} />
                     </button>
                   ))}
@@ -665,10 +665,10 @@ export default function PDFViewer({ embedded = false }: PDFViewerProps) {
             )}
 
             <div className="ann-actions">
-              <button className="ann-action-btn undo-btn" onClick={undoLastAnnotation} title="元に戻す">
+              <button className="ann-action-btn undo-btn" onClick={undoLastAnnotation} title="Undo">
                 ↩
               </button>
-              <button className="ann-action-btn clear-btn" onClick={clearPageAnnotations} title="このページを消去">
+              <button className="ann-action-btn clear-btn" onClick={clearPageAnnotations} title="Clear this page">
                 <Trash2 size={14} />
               </button>
             </div>
@@ -679,7 +679,7 @@ export default function PDFViewer({ embedded = false }: PDFViewerProps) {
         {showTimer && (
           timerCollapsed ? (
             <button className={`timer-panel timer-panel-collapsed${timerAlert ? ' alert' : ''}`}
-              onClick={() => setTimerCollapsed(false)} title="タイマーを展開">
+              onClick={() => setTimerCollapsed(false)} title="Expand timer">
               <span className="timer-display-mini">{formatTime(timerSeconds)}</span>
               {timerRunning && <span className="timer-running-dot" />}
             </button>
@@ -687,30 +687,30 @@ export default function PDFViewer({ embedded = false }: PDFViewerProps) {
             <div className="timer-panel">
               <div className="timer-panel-header">
                 <div className="timer-mode-tabs">
-                  <button className={`timer-tab${timerMode === 'stopwatch' ? ' active' : ''}`} onClick={() => switchTimerMode('stopwatch')}>ストップウォッチ</button>
-                  <button className={`timer-tab${timerMode === 'countdown' ? ' active' : ''}`} onClick={() => switchTimerMode('countdown')}>カウントダウン</button>
+                  <button className={`timer-tab${timerMode === 'stopwatch' ? ' active' : ''}`} onClick={() => switchTimerMode('stopwatch')}>Stopwatch</button>
+                  <button className={`timer-tab${timerMode === 'countdown' ? ' active' : ''}`} onClick={() => switchTimerMode('countdown')}>Countdown</button>
                 </div>
-                <button className="timer-collapse-btn" onClick={() => setTimerCollapsed(true)}><ChevronLeft size={16} />しまう</button>
+                <button className="timer-collapse-btn" onClick={() => setTimerCollapsed(true)}><ChevronLeft size={16} />Collapse</button>
               </div>
               <div className="timer-display">{formatTime(timerSeconds)}</div>
               {timerMode === 'countdown' && !timerRunning && timerSeconds === 0 && (
                 <div className="timer-input-row">
                   <input type="number" className="timer-input" value={timerInput} min={1} max={180}
                     onChange={e => setTimerInput(Math.max(1, parseInt(e.target.value)||1))} />
-                  <span className="timer-unit">分</span>
+                  <span className="timer-unit">min</span>
                 </div>
               )}
               <div className="timer-controls">
                 {timerMode === 'countdown' && !timerRunning && timerSeconds === 0 ? (
-                  <button className="timer-btn start" onClick={startCountdown}><Play size={14} /> 開始</button>
+                  <button className="timer-btn start" onClick={startCountdown}><Play size={14} /> Start</button>
                 ) : (
                   <>
                     <button className={`timer-btn${timerRunning ? ' pause' : ' start'}`}
                       onClick={() => { setTimerRunning(v => !v); if (!timerRunning) setTimerCollapsed(true); }}>
                       {timerRunning ? <Pause size={14} /> : <Play size={14} />}
-                      {timerRunning ? '一時停止' : '再開'}
+                      {timerRunning ? 'Pause' : 'Resume'}
                     </button>
-                    <button className="timer-btn reset" onClick={resetTimer}><RotateCcw size={14} /> リセット</button>
+                    <button className="timer-btn reset" onClick={resetTimer}><RotateCcw size={14} /> Reset</button>
                   </>
                 )}
               </div>
@@ -722,14 +722,14 @@ export default function PDFViewer({ embedded = false }: PDFViewerProps) {
         <div className="pdf-canvas-area">
           {isLoading && (
             <div className="pdf-status">
-              <div className="pdf-spinner" /><span>読み込み中...</span>
+              <div className="pdf-spinner" /><span>Loading...</span>
             </div>
           )}
           {error && (
             <div className="pdf-status pdf-error">
               <FileText size={40} opacity={0.4} />
               <p>{error}</p>
-              <button className="pdf-text-btn" onClick={closePDF}>戻る</button>
+              <button className="pdf-text-btn" onClick={closePDF}>Back</button>
             </div>
           )}
           {!isLoading && !error && (
@@ -955,22 +955,22 @@ export default function PDFViewer({ embedded = false }: PDFViewerProps) {
       <div className="pdf-home-inner">
         <div className="pdf-header">
           <FileText size={32} className="pdf-header-icon" />
-          <h2>PDF ビューア</h2>
-          <p className="pdf-desc">試験問題などのPDFをページナビ・ズーム・タイマー付きで快適に閲覧できます</p>
+          <h2>PDF Viewer</h2>
+          <p className="pdf-desc">View PDFs such as practice exams with page navigation, zoom, and a built-in timer.</p>
         </div>
 
         <form onSubmit={handleUrlSubmit} className="url-form">
           <div className="url-input-row">
             <LinkIcon size={16} className="url-icon" />
             <input type="url" value={inputUrl} onChange={e => setInputUrl(e.target.value)}
-              placeholder="PDFのURLを入力..." className="url-input" />
+              placeholder="Enter PDF URL..." className="url-input" />
           </div>
-          <button type="submit" className="btn-open" disabled={!inputUrl.trim()}>開く</button>
+          <button type="submit" className="btn-open" disabled={!inputUrl.trim()}>Open</button>
         </form>
 
         <div className="upload-section">
           <button className="btn-upload" onClick={() => fileInputRef.current?.click()}>
-            <Upload size={18} />ファイルを選択して開く
+            <Upload size={18} />Open from file
           </button>
           <input ref={fileInputRef} type="file" accept="application/pdf" hidden onChange={handleFileUpload} />
         </div>
@@ -979,11 +979,11 @@ export default function PDFViewer({ embedded = false }: PDFViewerProps) {
         <div className="photo-section">
           <div className="photo-section-header">
             <ImageIcon size={18} className="photo-icon" />
-            <span>写真から1枚のPDFにする</span>
+            <span>Combine photos into one PDF</span>
           </div>
 
           <button className="btn-add-photos" onClick={() => photoInputRef.current?.click()}>
-            <Plus size={16} />写真を追加
+            <Plus size={16} />Add photos
           </button>
           <input ref={photoInputRef} type="file" accept="image/*" multiple hidden onChange={handlePhotoSelect} />
 
@@ -1003,7 +1003,7 @@ export default function PDFViewer({ embedded = false }: PDFViewerProps) {
                 onClick={handleCreatePDF}
                 disabled={isConvertingPDF}
               >
-                {isConvertingPDF ? '変換中...' : `PDFを作成 (${photoThumbs.length}枚)`}
+                {isConvertingPDF ? 'Converting...' : `Create PDF (${photoThumbs.length} photos)`}
               </button>
             </>
           )}

@@ -244,11 +244,11 @@ export default function Home() {
         <nav className="bottom-nav">
           <button className={`nav-item ${activeTab === 'memos' ? 'active' : ''}`} onClick={() => { setActiveTab('memos'); setActiveNoteId(undefined); }}>
             <Book size={24} />
-            <span>メモ</span>
+            <span>Notes</span>
           </button>
           <button className={`nav-item ${activeTab === 'sketch' ? 'active' : ''}`} onClick={() => { setActiveTab('sketch'); setActiveNoteId(undefined); }}>
             <Brush size={24} />
-            <span>落書き</span>
+            <span>Sketch</span>
           </button>
           <button className={`nav-item ${activeTab === 'pdf' ? 'active' : ''}`} onClick={() => { setActiveTab('pdf'); setActiveNoteId(undefined); }}>
             <FileText size={24} />
@@ -260,7 +260,7 @@ export default function Home() {
           </button>
           <button className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => { setActiveTab('settings'); setActiveNoteId(undefined); }}>
             <SettingsIcon size={24} />
-            <span>設定</span>
+            <span>Settings</span>
           </button>
         </nav>
       )}

@@ -72,10 +72,10 @@ function currentTonePrompt(): string {
 
 function timeOfDayPlaceholder(): string {
   const h = new Date().getHours();
-  if (h >= 5 && h < 11) return 'おはよう、何か聞きたいか？';
-  if (h >= 11 && h < 17) return 'sikunに話す...';
-  if (h >= 17 && h < 22) return 'お疲れさま。何か手伝おうか？';
-  return '夜更かし？短めに答えるよ';
+  if (h >= 5 && h < 11) return 'Good morning! What can I help with?';
+  if (h >= 11 && h < 17) return 'Talk to sikun...';
+  if (h >= 17 && h < 22) return 'Good work today. Need any help?';
+  return 'Burning midnight oil? I\'ll keep it short.';
 }
 
 function formatMs(ms: number): string {
@@ -272,7 +272,7 @@ export default function InstanceSikun({ activeNoteId, prevNoteId, onOpenNote, is
       if (remaining <= 0) {
         if (pomodoroRef.current) { window.clearInterval(pomodoroRef.current); pomodoroRef.current = null; }
         setPomodoroMs(0);
-        setLastReply(`${pomodoroMinRef.current}分経ったよ！お疲れさま、少し休もう。`);
+        setLastReply(`${pomodoroMinRef.current} minutes done! Good work — take a break.`);
         setBubbleVisible(true);
         if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
         window.setTimeout(() => setPomodoroMs(null), 4000);
@@ -384,7 +384,7 @@ export default function InstanceSikun({ activeNoteId, prevNoteId, onOpenNote, is
       setTapStreak(nextStreak);
       if (nextStreak >= 5) {
         setTapStreak(0);
-        setLastReply('くすぐったいよ！そんなに連打しないで〜🐶');
+        setLastReply('That tickles! Stop tapping so fast~ 🐶');
         setBubbleVisible(true);
         return;
       }
@@ -412,10 +412,10 @@ export default function InstanceSikun({ activeNoteId, prevNoteId, onOpenNote, is
     setPendingAnswer('');
     if (prevNoteId !== undefined && onOpenNote) {
       onOpenNote(prevNoteId);
-      setLastReply('さっきのメモを開いたよ。');
+      setLastReply('Opened your previous note.');
       setBubbleVisible(true);
     } else {
-      setLastReply('戻れるメモがまだ無いよ。');
+      setLastReply('No previous note to go back to.');
       setBubbleVisible(true);
     }
   }, [prevNoteId, onOpenNote]);
@@ -424,7 +424,7 @@ export default function InstanceSikun({ activeNoteId, prevNoteId, onOpenNote, is
   const randomQA = useCallback(async () => {
     setRadialOpen(false);
     if (activeNoteId === undefined) {
-      setLastReply('メモを開いてからにしてね。');
+      setLastReply('Please open a note first.');
       setBubbleVisible(true);
       return;
     }
@@ -444,7 +444,7 @@ export default function InstanceSikun({ activeNoteId, prevNoteId, onOpenNote, is
         }
       }
       if (pairs.length === 0) {
-        setLastReply('このメモにQ&Aが見つからないよ。');
+        setLastReply('No Q&A found in this note.');
         setBubbleVisible(true);
         return;
       }
@@ -454,7 +454,7 @@ export default function InstanceSikun({ activeNoteId, prevNoteId, onOpenNote, is
       setQuizMode(true);
       setBubbleVisible(true);
     } catch {
-      setLastReply('Q&Aの取得に失敗しちゃった。');
+      setLastReply('Failed to load Q&A.');
       setBubbleVisible(true);
     }
   }, [activeNoteId]);
@@ -467,13 +467,13 @@ export default function InstanceSikun({ activeNoteId, prevNoteId, onOpenNote, is
     try {
       const notes = await db.notes.orderBy('updatedAt').reverse().limit(5).toArray();
       if (notes.length === 0) {
-        setLastReply('まだメモが無いよ。');
+        setLastReply('No notes yet.');
       } else {
-        setLastReply('最近のメモ:\n' + notes.map((n, i) => `${i + 1}. ${n.title || '無題'}`).join('\n'));
+        setLastReply('Recent notes:\n' + notes.map((n, i) => `${i + 1}. ${n.title || 'Untitled'}`).join('\n'));
       }
       setBubbleVisible(true);
     } catch {
-      setLastReply('取得に失敗しちゃった。');
+      setLastReply('Failed to retrieve notes.');
       setBubbleVisible(true);
     }
   }, []);
@@ -493,7 +493,7 @@ export default function InstanceSikun({ activeNoteId, prevNoteId, onOpenNote, is
     if (pausedMs !== null && /(再開|続き|続け|resume)/i.test(text)) {
       closeInput();
       resumePomodoro();
-      setLastReply('タイマーを再開したよ！');
+      setLastReply('Timer resumed!');
       setBubbleVisible(true);
       return;
     }
@@ -501,7 +501,7 @@ export default function InstanceSikun({ activeNoteId, prevNoteId, onOpenNote, is
     if ((pomodoroMs !== null || pausedMs !== null) && /(終了|キャンセル|cancel|やめ)/i.test(text)) {
       closeInput();
       cancelPomodoro();
-      setLastReply('タイマーを終了したよ。');
+      setLastReply('Timer stopped.');
       setBubbleVisible(true);
       return;
     }
@@ -509,7 +509,7 @@ export default function InstanceSikun({ activeNoteId, prevNoteId, onOpenNote, is
     if (pomodoroMs !== null && /(止め|ストップ|一時停止|stop|pause)/i.test(text)) {
       closeInput();
       pausePomodoro();
-      setLastReply('タイマーを一時停止したよ。「再開」で続けられる。');
+      setLastReply('Timer paused. Say "resume" to continue.');
       setBubbleVisible(true);
       return;
     }
@@ -519,7 +519,7 @@ export default function InstanceSikun({ activeNoteId, prevNoteId, onOpenNote, is
       closeInput();
       const mins = parseInt(pomMatch[1] || pomMatch[4] || '30', 10);
       startPomodoro(mins);
-      setLastReply(`${mins}分のタイマーを開始したよ！集中しよう。`);
+      setLastReply(`${mins}-minute timer started! Stay focused.`);
       setBubbleVisible(true);
       return;
     }
@@ -531,7 +531,7 @@ export default function InstanceSikun({ activeNoteId, prevNoteId, onOpenNote, is
     if (!text || loading) return;
     const apiKey = localStorage.getItem('lily_gemini_api_key') || '';
     if (!apiKey) {
-      setLastReply('設定で Gemini API キーを保存してくれ');
+      setLastReply('Please save your Gemini API key in Settings first.');
       setBubbleVisible(true);
       setMode('closed');
       return;
@@ -647,7 +647,7 @@ export default function InstanceSikun({ activeNoteId, prevNoteId, onOpenNote, is
       saveSikunHistory(finalHistory);
       setMode('closed');
     } catch (err) {
-      setLastReply(`エラー: ${err instanceof Error ? err.message : '失敗'}`);
+      setLastReply(`Error: ${err instanceof Error ? err.message : 'Failed'}`);
       setBubbleVisible(true);
     } finally {
       setLoading(false);
@@ -667,27 +667,27 @@ export default function InstanceSikun({ activeNoteId, prevNoteId, onOpenNote, is
   const radialItems: { key: string; emoji: string; label: string; run: () => void }[] = [];
   if (isPdfTab) {
     // PDF tab → analyze the current page or the whole document
-    radialItems.push({ key: 'pdfx', emoji: '📄', label: 'ページ解説', run: () => { setRadialOpen(false); void sendQuickAction('このPDFページの内容を、初学者にも分かるよう丁寧に解説して。', { attachPdf: true, heavy: true }); } });
-    radialItems.push({ key: 'pdfall', emoji: '📚', label: 'PDF全文解説', run: () => { setRadialOpen(false); void sendQuickAction('このPDF全体の内容を、章立て・ポイントを押さえて丁寧に解説して。', { attachPdfAll: true, heavy: true }); } });
-    radialItems.push({ key: 'pdft', emoji: '🔤', label: '翻訳', run: () => { setRadialOpen(false); void sendQuickAction('このPDFページを日本語に翻訳して。', { attachPdf: true }); } });
+    radialItems.push({ key: 'pdfx', emoji: '📄', label: 'Explain page', run: () => { setRadialOpen(false); void sendQuickAction('このPDFページの内容を、初学者にも分かるよう丁寧に解説して。', { attachPdf: true, heavy: true }); } });
+    radialItems.push({ key: 'pdfall', emoji: '📚', label: 'Explain full PDF', run: () => { setRadialOpen(false); void sendQuickAction('このPDF全体の内容を、章立て・ポイントを押さえて丁寧に解説して。', { attachPdfAll: true, heavy: true }); } });
+    radialItems.push({ key: 'pdft', emoji: '🔤', label: 'Translate', run: () => { setRadialOpen(false); void sendQuickAction('このPDFページを日本語に翻訳して。', { attachPdf: true }); } });
   } else if (activeNoteId !== undefined) {
     // Memo open → memo actions (full content)
-    radialItems.push({ key: 'sum', emoji: '📝', label: '要約', run: () => { setRadialOpen(false); void sendQuickAction('このメモの内容を、要点を漏らさず分かりやすく要約して。', { fullNote: true, heavy: true }); } });
+    radialItems.push({ key: 'sum', emoji: '📝', label: 'Summarize', run: () => { setRadialOpen(false); void sendQuickAction('このメモの内容を、要点を漏らさず分かりやすく要約して。', { fullNote: true, heavy: true }); } });
     radialItems.push({ key: 'todo', emoji: '✅', label: 'ToDo', run: () => { setRadialOpen(false); void sendQuickAction('このメモから「やること(ToDo)」を箇条書きで抜き出して。無ければ「ToDoは無さそう」と答えて。', { fullNote: true }); } });
-    radialItems.push({ key: 'qa', emoji: '🎲', label: 'ランダム問題', run: () => void randomQA() });
+    radialItems.push({ key: 'qa', emoji: '🎲', label: 'Random Q', run: () => void randomQA() });
   }
-  radialItems.push({ key: 'rec',  emoji: '📋', label: '最近のメモ',  run: () => void showRecentMemos() });
+  radialItems.push({ key: 'rec',  emoji: '📋', label: 'Recent notes',  run: () => void showRecentMemos() });
   if (pomodoroMs !== null) {
-    radialItems.push({ key: 'pause', emoji: '⏸', label: '一時停止', run: () => { setRadialOpen(false); pausePomodoro(); setLastReply('タイマーを一時停止したよ。「再開」で続けられる。'); setBubbleVisible(true); } });
-    radialItems.push({ key: 'stop', emoji: '⏹', label: '終了', run: () => { setRadialOpen(false); cancelPomodoro(); setLastReply('タイマーを終了したよ。'); setBubbleVisible(true); } });
+    radialItems.push({ key: 'pause', emoji: '⏸', label: 'Pause', run: () => { setRadialOpen(false); pausePomodoro(); setLastReply('Timer paused. Say "resume" to continue.'); setBubbleVisible(true); } });
+    radialItems.push({ key: 'stop', emoji: '⏹', label: 'Stop', run: () => { setRadialOpen(false); cancelPomodoro(); setLastReply('Timer stopped.'); setBubbleVisible(true); } });
   } else if (pausedMs !== null) {
-    radialItems.push({ key: 'resume', emoji: '▶', label: '再開', run: () => { setRadialOpen(false); resumePomodoro(); setLastReply('タイマーを再開したよ！'); setBubbleVisible(true); } });
-    radialItems.push({ key: 'stop', emoji: '⏹', label: '終了', run: () => { setRadialOpen(false); cancelPomodoro(); setLastReply('タイマーを終了したよ。'); setBubbleVisible(true); } });
+    radialItems.push({ key: 'resume', emoji: '▶', label: 'Resume', run: () => { setRadialOpen(false); resumePomodoro(); setLastReply('Timer resumed!'); setBubbleVisible(true); } });
+    radialItems.push({ key: 'stop', emoji: '⏹', label: 'Stop', run: () => { setRadialOpen(false); cancelPomodoro(); setLastReply('Timer stopped.'); setBubbleVisible(true); } });
   } else {
-    radialItems.push({ key: 'p30', emoji: '⏱', label: '30分', run: () => { setRadialOpen(false); startPomodoro(30); setLastReply('30分のタイマーを開始したよ！集中しよう。'); setBubbleVisible(true); } });
-    radialItems.push({ key: 'p60', emoji: '⏰', label: '60分', run: () => { setRadialOpen(false); startPomodoro(60); setLastReply('60分のタイマーを開始したよ！集中しよう。'); setBubbleVisible(true); } });
+    radialItems.push({ key: 'p30', emoji: '⏱', label: '30 min', run: () => { setRadialOpen(false); startPomodoro(30); setLastReply('30-minute timer started! Stay focused.'); setBubbleVisible(true); } });
+    radialItems.push({ key: 'p60', emoji: '⏰', label: '60 min', run: () => { setRadialOpen(false); startPomodoro(60); setLastReply('60-minute timer started! Stay focused.'); setBubbleVisible(true); } });
   }
-  radialItems.push({ key: 'prev', emoji: '⏮', label: '前のメモ', run: jumpToPrevNote });
+  radialItems.push({ key: 'prev', emoji: '⏮', label: 'Prev note', run: jumpToPrevNote });
 
   const iconCx = pos.x + ICON_SIZE / 2;
   const iconCy = pos.y + ICON_SIZE / 2;
@@ -727,7 +727,7 @@ export default function InstanceSikun({ activeNoteId, prevNoteId, onOpenNote, is
           setDragging(false);
         }}
         aria-label="sikun"
-        title="タップで話す / ドラッグで移動 / 長押しでメニュー"
+        title="Tap to chat / Drag to move / Long-press for menu"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={currentIcon} alt="sikun" draggable={false} />
@@ -778,7 +778,7 @@ export default function InstanceSikun({ activeNoteId, prevNoteId, onOpenNote, is
                   className="sikun-answer-btn"
                   onClick={() => { setLastReply(`A: ${pendingAnswer}`); setPendingAnswer(''); }}
                 >
-                  答えを見る
+                  Show answer
                 </button>
               )}
               {quizMode && (
@@ -786,7 +786,7 @@ export default function InstanceSikun({ activeNoteId, prevNoteId, onOpenNote, is
                   className="sikun-answer-btn outline"
                   onClick={() => void randomQA()}
                 >
-                  次の問題 →
+                  Next question →
                 </button>
               )}
             </div>

@@ -27,7 +27,7 @@ function stripHeavy(messages: readonly unknown[]): ChatLike[] {
 
 function makeTitle(messages: readonly unknown[]): string {
   const firstUser = (messages as ChatLike[]).find(m => m.role === 'user');
-  const raw = (String(firstUser?.text || '') || '新しい会話').replace(/\s+/g, ' ').trim();
+  const raw = (String(firstUser?.text || '') || 'New conversation').replace(/\s+/g, ' ').trim();
   return raw.length > 40 ? raw.slice(0, 40) + '…' : raw;
 }
 

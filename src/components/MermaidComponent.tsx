@@ -29,7 +29,7 @@ export default function MermaidComponent({ node: { attrs }, updateAttributes }: 
         if (!cancelled) { setSvg(renderedSvg); setError(''); }
       } catch (err) {
         console.error('Mermaid render error:', err);
-        if (!cancelled) { setError('構文エラー'); setEditing(true); }
+        if (!cancelled) { setError('Syntax error'); setEditing(true); }
       }
     };
     void doRender();
@@ -61,13 +61,13 @@ export default function MermaidComponent({ node: { attrs }, updateAttributes }: 
        }}
     >
       <div className="mermaid-header" contentEditable={false}>
-          <span className="mermaid-label">Mermaid 図</span>
+          <span className="mermaid-label">Mermaid diagram</span>
           <div className="mermaid-header-actions">
             <select
               value={attrs.width || '100%'}
               onChange={(e) => updateAttributes({ width: e.target.value })}
               className="size-select"
-              title="図のサイズを変更"
+              title="Resize diagram"
             >
               <option value="25%">25%</option>
               <option value="50%">50%</option>
@@ -79,7 +79,7 @@ export default function MermaidComponent({ node: { attrs }, updateAttributes }: 
               <option value="300%">300%</option>
             </select>
             <button className="btn-edit" onClick={() => { setError(''); setEditing(!editing); }}>
-              {editing ? 'プレビュー表示' : 'コードを編集'}
+              {editing ? 'Preview' : 'Edit code'}
             </button>
           </div>
       </div>
@@ -97,8 +97,8 @@ export default function MermaidComponent({ node: { attrs }, updateAttributes }: 
         />
       ) : error ? (
         <div className="mermaid-error" contentEditable={false}>
-          <span className="mermaid-error-msg">Mermaid 構文エラー — コードを確認してね</span>
-          <button className="btn-edit" onClick={() => { setError(''); setEditing(true); }}>編集</button>
+          <span className="mermaid-error-msg">Mermaid syntax error — please check your code</span>
+          <button className="btn-edit" onClick={() => { setError(''); setEditing(true); }}>Edit</button>
         </div>
       ) : (
         <div

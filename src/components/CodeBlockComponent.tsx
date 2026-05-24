@@ -106,7 +106,7 @@ export default function CodeBlockComponent({ node: { attrs }, updateAttributes }
               <option key={lang} value={lang}>{lang}</option>
             ))}
           </select>
-          <button style={toggleBtnStyle} onClick={toggleTheme} title={isDark ? 'ライトテーマに切替' : 'ダークテーマに切替'}>
+          <button style={toggleBtnStyle} onClick={toggleTheme} title={isDark ? 'Switch to light theme' : 'Switch to dark theme'}>
             {isDark ? '☀️' : '🌙'}
           </button>
         </div>

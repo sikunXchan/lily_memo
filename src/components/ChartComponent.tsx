@@ -33,11 +33,11 @@ ChartJS.register(
   Filler
 );
 
-const defaultCode = `// Chart.jsの設定オブジェクトを返してください。
-// 読み込んだCSV/Excelデータは変数 "fileData" に配列として格納されます。
-// 例として、最初の行をラベルとし、それ以降の行をデータセットとして扱うことができます。
+const defaultCode = `// Return a Chart.js configuration object.
+// CSV/Excel data loaded via the button is stored in "fileData" as a 2D array.
+// Example: use the first row as labels and subsequent rows as dataset values.
 
-const labels = fileData ? fileData.slice(1).map(row => row[0]) : ['1月', '2月', '3月'];
+const labels = fileData ? fileData.slice(1).map(row => row[0]) : ['Jan', 'Feb', 'Mar'];
 const dataValues = fileData ? fileData.slice(1).map(row => Number(row[1])) : [10, 20, 15];
 
 return {
@@ -45,7 +45,7 @@ return {
   data: {
     labels: labels,
     datasets: [{
-      label: fileData && fileData[0] ? fileData[0][1] || 'Dataset 1' : 'データ',
+      label: fileData && fileData[0] ? fileData[0][1] || 'Dataset 1' : 'Data',
       data: dataValues,
       backgroundColor: 'rgba(255, 182, 193, 0.6)',
       borderColor: 'rgba(255, 182, 193, 1)',
@@ -65,7 +65,7 @@ export default function ChartComponent({ node: { attrs }, updateAttributes }: Re
   const getInitialCode = () => {
     if (attrs.code) return attrs.code;
     if (attrs.data && Object.keys(attrs.data).length > 0) {
-      return `// 過去のグラフデータからの復元コード
+      return `// Restored from previous chart data
 return {
   type: '${attrs.type || 'bar'}',
   data: ${JSON.stringify(attrs.data, null, 2)},
@@ -141,7 +141,7 @@ return {
             fileName: file.name 
           });
         } catch {
-             alert('ファイルの読み込みに失敗しました。');
+             alert('Failed to load file.');
         }
       };
       reader.readAsBinaryString(file);
@@ -188,7 +188,7 @@ return {
               value={attrs.width || '100%'}
               onChange={(e) => updateAttributes({ width: e.target.value })}
               className="size-select"
-              title="グラフサイズの変更"
+              title="Resize chart"
             >
               <option value="25%">25%</option>
               <option value="50%">50%</option>
@@ -200,7 +200,7 @@ return {
               <option value="300%">300%</option>
             </select>
             {!editing && (
-              <button className="btn-export" onClick={exportAsPng} title="PNG画像として保存">
+              <button className="btn-export" onClick={exportAsPng} title="Save as PNG image">
                 <Download size={14} /> PNG
               </button>
             )}
@@ -213,7 +213,7 @@ return {
                 }
             }}>
               {editing ? <Save size={16} /> : <Edit3 size={16} />}
-              {editing ? '完了' : 'コード編集'}
+              {editing ? 'Done' : 'Edit code'}
             </button>
           </div>
       </div>
@@ -223,7 +223,7 @@ return {
             <div className="upload-section">
                 <label className="btn-upload">
                     <Upload size={16} />
-                    CSV / Excelを読み込む
+                    Load CSV / Excel
                     <input type="file" hidden accept=".csv,.xlsx,.xls" onChange={handleFileUpload} />
                 </label>
             </div>
@@ -238,7 +238,7 @@ return {
                  className="code-textarea"
                  spellCheck={false}
                />
-               <button className="btn-run" onClick={handleSaveCode}><Play size={14}/> 適用</button>
+               <button className="btn-run" onClick={handleSaveCode}><Play size={14}/> Apply</button>
             </div>
             
             {errorMsg && <div className="error-message">Error: {errorMsg}</div>}
@@ -255,13 +255,13 @@ return {
         >
             {computedConfig.error ? (
                 <div className="error-message">
-                  コードの実行エラー: {computedConfig.error}
+                  Code execution error: {computedConfig.error}
                 </div>
             ) : computedConfig.config ? (
                 (() => {
                     const chartConfig = computedConfig.config;
                     if (!chartConfig.data || !Array.isArray(chartConfig.data.datasets)) {
-                        return <div className="error-message">グラフデータの形式が不正です（datasets配列が見つかりません）。</div>;
+                        return <div className="error-message">Invalid chart data format (datasets array not found).</div>;
                     }
                     const chartType = chartConfig.type || 'bar';
                     const props = {
@@ -276,7 +276,7 @@ return {
                            <Bar {...props} />;
                 })()
             ) : (
-                <div className="placeholder">設定がありません。</div>
+                <div className="placeholder">No configuration yet.</div>
             )}
         </div>
       )}

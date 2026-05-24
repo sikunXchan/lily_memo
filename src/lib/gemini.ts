@@ -205,7 +205,7 @@ export async function streamSikunlilyChat(
       }
 
       if (fullResponse.trim()) return fullResponse.trim();
-      lastError = '空の応答が返ってきたよ';
+      lastError = 'Empty response received.';
     } catch (e) {
       lastError = (e as Error).message;
     }
@@ -296,8 +296,8 @@ export async function callGeminiChat(
           if (text) return text;
         }
         lastError = data.candidates?.[0]?.finishReason
-          ? `応答を生成できなかったよ (${data.candidates[0].finishReason})`
-          : '空の応答が返ってきたよ';
+          ? `Could not generate a response (${data.candidates[0].finishReason})`
+          : 'Empty response received.';
         break; // non-retryable empty response → next model
       }
 
@@ -314,7 +314,7 @@ export async function callGeminiChat(
   }
 
   throw new Error(
-    `ごめんね、うまく答えられなかった…💦 少し時間をおくか、メモ/ファイルを変えて試してみてね。\n${lastError}`
+    `Sorry, I couldn't respond… 💦 Please wait a moment or try with a different note/file.\n${lastError}`
   );
 }
 
@@ -596,7 +596,7 @@ export async function callGemini(prompt: string, apiKey: string): Promise<string
         const d = await res.json();
         const text = d.candidates?.[0]?.content?.parts?.[0]?.text || '';
         if (text) return text;
-        lastError = '空の応答が返ってきたよ';
+        lastError = 'Empty response received.';
         break;
       }
       const err = await res.json().catch(() => null);
