@@ -1,0 +1,2923 @@
+From 25b840d5a0c8f3d097107f73f3fe185e9f9f9345 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sat, 30 May 2026 23:46:00 +0000
+Subject: [PATCH] =?UTF-8?q?=E3=82=BF=E3=83=BC=E3=83=B3=E5=88=B6=E3=83=90?=
+ =?UTF-8?q?=E3=83=88=E3=83=AB=E3=82=B2=E3=83=BC=E3=83=A0=E3=81=AE=E8=BF=BD?=
+ =?UTF-8?q?=E5=8A=A0:=20React+Dexie=E7=A7=BB=E6=A4=8D?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+lily_memoのターン制バトルゲームをsikusikuに移植。
+React+Dexieコンポーネント・ゲームロジック・CSSを追加し、
+モード選択UIでPhaserアクションバトルと切り替え可能にした。
+
+https://claude.ai/code/session_01R94XmJipJS1YMM5r3HsbXn
+---
+ index.html                              |   6 +
+ package-lock.json                       | 183 ++++-
+ package.json                            |   8 +-
+ src/components/BattleScreen.tsx         | 269 ++++++++
+ src/components/CollectionScreen.tsx     | 100 +++
+ src/components/GameApp.tsx              | 295 +++++++++
+ src/components/GameHome.tsx             |  79 +++
+ src/components/QuestEncounterScreen.tsx | 129 ++++
+ src/components/TeamSelectScreen.tsx     | 137 ++++
+ src/game.css                            | 846 ++++++++++++++++++++++++
+ src/game/battle.ts                      | 271 ++++++++
+ src/game/gameDb.ts                      |  54 ++
+ src/game/moves.ts                       |  36 +
+ src/game/species.ts                     |  50 ++
+ src/game/types.ts                       | 126 ++++
+ src/main.ts                             |  29 +-
+ src/turn-game.tsx                       |   9 +
+ tsconfig.json                           |   6 +-
+ vite.config.ts                          |   8 +
+ 19 files changed, 2637 insertions(+), 4 deletions(-)
+ create mode 100644 src/components/BattleScreen.tsx
+ create mode 100644 src/components/CollectionScreen.tsx
+ create mode 100644 src/components/GameApp.tsx
+ create mode 100644 src/components/GameHome.tsx
+ create mode 100644 src/components/QuestEncounterScreen.tsx
+ create mode 100644 src/components/TeamSelectScreen.tsx
+ create mode 100644 src/game.css
+ create mode 100644 src/game/battle.ts
+ create mode 100644 src/game/gameDb.ts
+ create mode 100644 src/game/moves.ts
+ create mode 100644 src/game/species.ts
+ create mode 100644 src/game/types.ts
+ create mode 100644 src/turn-game.tsx
+
+diff --git a/index.html b/index.html
+index ae46653..bf35687 100644
+--- a/index.html
++++ b/index.html
+@@ -82,6 +82,12 @@
+       <h1>横向きにしてね</h1>
+       <p>このゲームは横画面でプレイします<br />スマホを横に回してください</p>
+     </div>
++    <div id="turn-game" style="position:fixed;inset:0;z-index:100;display:none;background:#1a1530;"></div>
++    <div id="mode-select" style="position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;background:linear-gradient(160deg,#1a1530,#2a2350);color:white;font-family:system-ui,sans-serif;">
++      <h1 style="font-size:2rem;font-weight:900;margin:0;">しくん &amp; ちゃくん<br/>バトル</h1>
++      <button id="btn-turn" style="padding:16px 40px;border-radius:16px;border:none;background:#6c63ff;color:white;font-size:1.1rem;font-weight:700;cursor:pointer;">⚔️ ターン制バトル</button>
++      <button id="btn-action" style="padding:16px 40px;border-radius:16px;border:none;background:#ff6b6b;color:white;font-size:1.1rem;font-weight:700;cursor:pointer;">🏃 アクションバトル</button>
++    </div>
+     <script type="module" src="/src/main.ts"></script>
+   </body>
+ </html>
+diff --git a/package-lock.json b/package-lock.json
+index 7d0ce8b..ff0fcdd 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -8,9 +8,15 @@
+       "name": "sikun-lily-battle",
+       "version": "0.1.0",
+       "dependencies": {
+-        "phaser": "^3.80.1"
++        "dexie": "^4.4.3",
++        "phaser": "^3.80.1",
++        "react": "^19.2.6",
++        "react-dom": "^19.2.6"
+       },
+       "devDependencies": {
++        "@types/react": "^19.2.15",
++        "@types/react-dom": "^19.2.3",
++        "@vitejs/plugin-react": "^4.7.0",
+         "typescript": "^5.4.5",
+         "vite": "^5.2.11",
+         "vite-plugin-pwa": "^1.3.0",
+@@ -1227,6 +1233,38 @@
+         "@babel/core": "^7.0.0-0"
+       }
+     },
++    "node_modules/@babel/plugin-transform-react-jsx-self": {
++      "version": "7.29.7",
++      "resolved": "https://registry.npmjs.org/@babel/plugin-transform-react-jsx-self/-/plugin-transform-react-jsx-self-7.29.7.tgz",
++      "integrity": "sha512-TL0hMc9xzy86VD31nUiwzd5otRAcyEPcsegCxolO0PvcXuH1v0kECe/UIznYFihpkvU5wg/jk4v0TTEFfm53fw==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@babel/helper-plugin-utils": "^7.29.7"
++      },
++      "engines": {
++        "node": ">=6.9.0"
++      },
++      "peerDependencies": {
++        "@babel/core": "^7.0.0-0"
++      }
++    },
++    "node_modules/@babel/plugin-transform-react-jsx-source": {
++      "version": "7.29.7",
++      "resolved": "https://registry.npmjs.org/@babel/plugin-transform-react-jsx-source/-/plugin-transform-react-jsx-source-7.29.7.tgz",
++      "integrity": "sha512-06IyK09H3wi4cGbhDBwp5gUGo0IKtnYa8tyTiephirPCK6fbobVGiXMMI5zLQ4aKEYP3wZ3ArU44o+8KMrSG/Q==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@babel/helper-plugin-utils": "^7.29.7"
++      },
++      "engines": {
++        "node": ">=6.9.0"
++      },
++      "peerDependencies": {
++        "@babel/core": "^7.0.0-0"
++      }
++    },
+     "node_modules/@babel/plugin-transform-regenerator": {
+       "version": "7.29.7",
+       "resolved": "https://registry.npmjs.org/@babel/plugin-transform-regenerator/-/plugin-transform-regenerator-7.29.7.tgz",
+@@ -2058,6 +2096,13 @@
+         "@jridgewell/sourcemap-codec": "^1.4.14"
+       }
+     },
++    "node_modules/@rolldown/pluginutils": {
++      "version": "1.0.0-beta.27",
++      "resolved": "https://registry.npmjs.org/@rolldown/pluginutils/-/pluginutils-1.0.0-beta.27.tgz",
++      "integrity": "sha512-+d0F4MKMCbeVUJwG96uQ4SgAznZNSq93I3V+9NHA4OpvqG8mRCpGdKmK8l/dl02h2CCDHwW2FqilnTyDcAnqjA==",
++      "dev": true,
++      "license": "MIT"
++    },
+     "node_modules/@rollup/plugin-babel": {
+       "version": "6.1.0",
+       "resolved": "https://registry.npmjs.org/@rollup/plugin-babel/-/plugin-babel-6.1.0.tgz",
+@@ -2558,6 +2603,51 @@
+         "node": ">=12"
+       }
+     },
++    "node_modules/@types/babel__core": {
++      "version": "7.20.5",
++      "resolved": "https://registry.npmjs.org/@types/babel__core/-/babel__core-7.20.5.tgz",
++      "integrity": "sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@babel/parser": "^7.20.7",
++        "@babel/types": "^7.20.7",
++        "@types/babel__generator": "*",
++        "@types/babel__template": "*",
++        "@types/babel__traverse": "*"
++      }
++    },
++    "node_modules/@types/babel__generator": {
++      "version": "7.27.0",
++      "resolved": "https://registry.npmjs.org/@types/babel__generator/-/babel__generator-7.27.0.tgz",
++      "integrity": "sha512-ufFd2Xi92OAVPYsy+P4n7/U7e68fex0+Ee8gSG9KX7eo084CWiQ4sdxktvdl0bOPupXtVJPY19zk6EwWqUQ8lg==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@babel/types": "^7.0.0"
++      }
++    },
++    "node_modules/@types/babel__template": {
++      "version": "7.4.4",
++      "resolved": "https://registry.npmjs.org/@types/babel__template/-/babel__template-7.4.4.tgz",
++      "integrity": "sha512-h/NUaSyG5EyxBIp8YRxo4RMe2/qQgvyowRwVMzhYhBCONbW8PUsg4lkFMrhgZhUe5z3L3MiLDuvyJ/CaPa2A8A==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@babel/parser": "^7.1.0",
++        "@babel/types": "^7.0.0"
++      }
++    },
++    "node_modules/@types/babel__traverse": {
++      "version": "7.28.0",
++      "resolved": "https://registry.npmjs.org/@types/babel__traverse/-/babel__traverse-7.28.0.tgz",
++      "integrity": "sha512-8PvcXf70gTDZBgt9ptxJ8elBeBjcLOAcOtoO/mPJjtji1+CdGbHgm77om1GrsPxsiE+uXIpNSK64UYaIwQXd4Q==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@babel/types": "^7.28.2"
++      }
++    },
+     "node_modules/@types/estree": {
+       "version": "1.0.8",
+       "resolved": "https://registry.npmjs.org/@types/estree/-/estree-1.0.8.tgz",
+@@ -2565,6 +2655,26 @@
+       "dev": true,
+       "license": "MIT"
+     },
++    "node_modules/@types/react": {
++      "version": "19.2.15",
++      "resolved": "https://registry.npmjs.org/@types/react/-/react-19.2.15.tgz",
++      "integrity": "sha512-eRwcGNHve+E8qtEQSSRl6urh+rFop4v8gm6O8rGv25CodbvFdLjA1vVQ1KkiFE0w0UPOnb8tDiFKL5lp0rtY5Q==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "csstype": "^3.2.2"
++      }
++    },
++    "node_modules/@types/react-dom": {
++      "version": "19.2.3",
++      "resolved": "https://registry.npmjs.org/@types/react-dom/-/react-dom-19.2.3.tgz",
++      "integrity": "sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==",
++      "dev": true,
++      "license": "MIT",
++      "peerDependencies": {
++        "@types/react": "^19.2.0"
++      }
++    },
+     "node_modules/@types/resolve": {
+       "version": "1.20.2",
+       "resolved": "https://registry.npmjs.org/@types/resolve/-/resolve-1.20.2.tgz",
+@@ -2579,6 +2689,27 @@
+       "dev": true,
+       "license": "MIT"
+     },
++    "node_modules/@vitejs/plugin-react": {
++      "version": "4.7.0",
++      "resolved": "https://registry.npmjs.org/@vitejs/plugin-react/-/plugin-react-4.7.0.tgz",
++      "integrity": "sha512-gUu9hwfWvvEDBBmgtAowQCojwZmJ5mcLn3aufeCsitijs3+f2NsrPtlAWIR6OPiqljl96GVCUbLe0HyqIpVaoA==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@babel/core": "^7.28.0",
++        "@babel/plugin-transform-react-jsx-self": "^7.27.1",
++        "@babel/plugin-transform-react-jsx-source": "^7.27.1",
++        "@rolldown/pluginutils": "1.0.0-beta.27",
++        "@types/babel__core": "^7.20.5",
++        "react-refresh": "^0.17.0"
++      },
++      "engines": {
++        "node": "^14.18.0 || >=16.0.0"
++      },
++      "peerDependencies": {
++        "vite": "^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0"
++      }
++    },
+     "node_modules/@vitest/expect": {
+       "version": "1.6.1",
+       "resolved": "https://registry.npmjs.org/@vitest/expect/-/expect-1.6.1.tgz",
+@@ -3103,6 +3234,13 @@
+         "node": ">=8"
+       }
+     },
++    "node_modules/csstype": {
++      "version": "3.2.3",
++      "resolved": "https://registry.npmjs.org/csstype/-/csstype-3.2.3.tgz",
++      "integrity": "sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==",
++      "dev": true,
++      "license": "MIT"
++    },
+     "node_modules/data-view-buffer": {
+       "version": "1.0.2",
+       "resolved": "https://registry.npmjs.org/data-view-buffer/-/data-view-buffer-1.0.2.tgz",
+@@ -3234,6 +3372,12 @@
+         "url": "https://github.com/sponsors/ljharb"
+       }
+     },
++    "node_modules/dexie": {
++      "version": "4.4.3",
++      "resolved": "https://registry.npmjs.org/dexie/-/dexie-4.4.3.tgz",
++      "integrity": "sha512-N+3IGQ3HPlyO2YAkntGAwitm42BpBGV86MttzUMiRzWLa4NGh0pltVRcUVF4ybL/OnXjCrr9k7SDPIKkFYP2Lg==",
++      "license": "Apache-2.0"
++    },
+     "node_modules/diff-sequences": {
+       "version": "29.6.3",
+       "resolved": "https://registry.npmjs.org/diff-sequences/-/diff-sequences-29.6.3.tgz",
+@@ -5018,6 +5162,27 @@
+         "node": ">=6"
+       }
+     },
++    "node_modules/react": {
++      "version": "19.2.6",
++      "resolved": "https://registry.npmjs.org/react/-/react-19.2.6.tgz",
++      "integrity": "sha512-sfWGGfavi0xr8Pg0sVsyHMAOziVYKgPLNrS7ig+ivMNb3wbCBw3KxtflsGBAwD3gYQlE/AEZsTLgToRrSCjb0Q==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=0.10.0"
++      }
++    },
++    "node_modules/react-dom": {
++      "version": "19.2.6",
++      "resolved": "https://registry.npmjs.org/react-dom/-/react-dom-19.2.6.tgz",
++      "integrity": "sha512-0prMI+hvBbPjsWnxDLxlCGyM8PN6UuWjEUCYmZhO67xIV9Xasa/r/vDnq+Xyq4Lo27g8QSbO5YzARu0D1Sps3g==",
++      "license": "MIT",
++      "dependencies": {
++        "scheduler": "^0.27.0"
++      },
++      "peerDependencies": {
++        "react": "^19.2.6"
++      }
++    },
+     "node_modules/react-is": {
+       "version": "18.3.1",
+       "resolved": "https://registry.npmjs.org/react-is/-/react-is-18.3.1.tgz",
+@@ -5025,6 +5190,16 @@
+       "dev": true,
+       "license": "MIT"
+     },
++    "node_modules/react-refresh": {
++      "version": "0.17.0",
++      "resolved": "https://registry.npmjs.org/react-refresh/-/react-refresh-0.17.0.tgz",
++      "integrity": "sha512-z6F7K9bV85EfseRCp2bzrpyQ0Gkw1uLoCel9XBVWPg/TjRj94SkJzUTGfOa4bs7iJvBWtQG0Wq7wnI0syw3EBQ==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=0.10.0"
++      }
++    },
+     "node_modules/reflect.getprototypeof": {
+       "version": "1.0.10",
+       "resolved": "https://registry.npmjs.org/reflect.getprototypeof/-/reflect.getprototypeof-1.0.10.tgz",
+@@ -5259,6 +5434,12 @@
+         "url": "https://github.com/sponsors/ljharb"
+       }
+     },
++    "node_modules/scheduler": {
++      "version": "0.27.0",
++      "resolved": "https://registry.npmjs.org/scheduler/-/scheduler-0.27.0.tgz",
++      "integrity": "sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q==",
++      "license": "MIT"
++    },
+     "node_modules/semver": {
+       "version": "6.3.1",
+       "resolved": "https://registry.npmjs.org/semver/-/semver-6.3.1.tgz",
+diff --git a/package.json b/package.json
+index 0d769c8..682d2f2 100644
+--- a/package.json
++++ b/package.json
+@@ -11,9 +11,15 @@
+     "test:watch": "vitest"
+   },
+   "dependencies": {
+-    "phaser": "^3.80.1"
++    "dexie": "^4.4.3",
++    "phaser": "^3.80.1",
++    "react": "^19.2.6",
++    "react-dom": "^19.2.6"
+   },
+   "devDependencies": {
++    "@types/react": "^19.2.15",
++    "@types/react-dom": "^19.2.3",
++    "@vitejs/plugin-react": "^4.7.0",
+     "typescript": "^5.4.5",
+     "vite": "^5.2.11",
+     "vite-plugin-pwa": "^1.3.0",
+diff --git a/src/components/BattleScreen.tsx b/src/components/BattleScreen.tsx
+new file mode 100644
+index 0000000..7a10c1a
+--- /dev/null
++++ b/src/components/BattleScreen.tsx
+@@ -0,0 +1,269 @@
++import { useState, useEffect } from 'react';
++import { resolveTurn } from '@/game/battle';
++import { MOVES } from '@/game/moves';
++import { SPECIES } from '@/game/species';
++import type { BattleState, BattleMon, MoveId } from '@/game/types';
++
++interface BattleScreenProps {
++  battleState: BattleState;
++  onBattleStateChange: (s: BattleState) => void;
++  onMoveSelect: (move: MoveId) => void;
++  onHandoffConfirm: () => void;
++  onNextTurn: () => void;
++  onSwitchPokemon: (index: number) => void;
++  onEndBattle: () => void;
++}
++
++function HpBar({ current, max }: { current: number; max: number }) {
++  const pct = Math.max(0, Math.min(100, (current / max) * 100));
++  const color = pct > 50 ? '#4ade80' : pct > 25 ? '#facc15' : '#f87171';
++  return (
++    <div className="pg-hp-bar-wrap">
++      <div className="pg-hp-bar-bg">
++        <div className="pg-hp-bar-fill" style={{ width: `${pct}%`, background: color }} />
++      </div>
++      <div className="pg-hp-text">{current}/{max}</div>
++    </div>
++  );
++}
++
++function TeamDots({ team, activeIndex }: { team: BattleMon[]; activeIndex: number }) {
++  return (
++    <div className="pg-team-dots">
++      {team.map((mon, i) => (
++        <div
++          key={i}
++          className={`pg-dot${i === activeIndex ? ' pg-active' : ''}${mon.currentHP <= 0 ? ' pg-fainted' : ''}`}
++        />
++      ))}
++    </div>
++  );
++}
++
++function MonCard({
++  mon,
++  isBack,
++  label,
++}: {
++  mon: BattleMon;
++  isBack: boolean;
++  label: string;
++}) {
++  const sp = SPECIES[mon.speciesId];
++  const sprite = isBack ? sp.backSprite : sp.frontSprite;
++  return (
++    <div className="pg-mon-card">
++      <div className="pg-mon-info">
++        <div className="pg-mon-name">{mon.name}<span className="pg-mon-label">{label}</span></div>
++        <HpBar current={mon.currentHP} max={mon.stats.maxHP} />
++      </div>
++      <img
++        src={sprite}
++        alt={mon.name}
++        className="pg-mon-sprite"
++        style={{ transform: isBack ? 'scaleX(-1)' : 'none' }}
++      />
++    </div>
++  );
++}
++
++export default function BattleScreen({
++  battleState,
++  onBattleStateChange,
++  onMoveSelect,
++  onHandoffConfirm,
++  onNextTurn,
++  onSwitchPokemon,
++  onEndBattle,
++}: BattleScreenProps) {
++  const [logIndex, setLogIndex] = useState(0);
++
++  const { phase, mode, turn, log } = battleState;
++
++  // Reset log index when log changes (new turn)
++  useEffect(() => {
++    setLogIndex(0);
++  }, [log]);
++
++  // Determine perspective: in p2-select, swap for PvP
++  const isPvpP2 = mode === 'pvp' && phase === 'p2-select';
++  const bottomTeam = isPvpP2 ? battleState.p2Team : battleState.p1Team;
++  const bottomIndex = isPvpP2 ? battleState.p2ActiveIndex : battleState.p1ActiveIndex;
++  const topTeam = isPvpP2 ? battleState.p1Team : battleState.p2Team;
++  const topIndex = isPvpP2 ? battleState.p1ActiveIndex : battleState.p2ActiveIndex;
++
++  const bottomMon = bottomTeam[bottomIndex];
++  const topMon = topTeam[topIndex];
++
++  const bottomLabel = isPvpP2 ? 'P2' : 'P1';
++  const topLabel = isPvpP2 ? 'P1' : (mode === 'quest' ? '野生' : 'P2');
++
++  // Available moves for current player
++  const activeMoves: MoveId[] = (() => {
++    const mon = isPvpP2 ? battleState.p2Team[battleState.p2ActiveIndex] : battleState.p1Team[battleState.p1ActiveIndex];
++    const sp = SPECIES[mon.speciesId];
++    return sp.moves;
++  })();
++
++  const getMoveAvailable = (moveId: MoveId): boolean => {
++    const mon = isPvpP2 ? battleState.p2Team[battleState.p2ActiveIndex] : battleState.p1Team[battleState.p1ActiveIndex];
++    return (mon.cooldowns[moveId] ?? 0) === 0;
++  };
++
++  // Resolve turn when both moves are selected and phase is 'resolving' but state hasn't been resolved yet
++  useEffect(() => {
++    if (
++      phase === 'resolving' &&
++      battleState.p1SelectedMove !== null &&
++      battleState.p2SelectedMove !== null &&
++      battleState.log.length === 0
++    ) {
++      const resolved = resolveTurn(battleState);
++      onBattleStateChange(resolved);
++    }
++  }, [battleState, phase, onBattleStateChange]);
++
++  // ── Handoff screen ──────────────────────────────────────────
++  if (phase === 'handoff') {
++    return (
++      <div className="pg-battle-screen pg-handoff">
++        <div className="pg-handoff-content">
++          <div className="pg-handoff-emoji">🔄</div>
++          <div className="pg-handoff-title">プレイヤー2に渡してください</div>
++          <div className="pg-handoff-sub">プレイヤー1が技を選びました</div>
++          <button className="pg-handoff-btn" onClick={onHandoffConfirm}>
++            ▶ つぎへ
++          </button>
++        </div>
++      </div>
++    );
++  }
++
++  // ── Ended screen ─────────────────────────────────────────────
++  if (phase === 'ended') {
++    const won = battleState.winner === 'p1';
++    return (
++      <div className="pg-battle-screen pg-ended">
++        <div className="pg-ended-content">
++          <div className="pg-ended-emoji">{won ? '🎉' : '😢'}</div>
++          <div className="pg-ended-title">
++            {mode === 'pvp'
++              ? `プレイヤー${battleState.winner === 'p1' ? 1 : 2}の勝ち！`
++              : won ? 'たおした！' : 'まけてしまった…'}
++          </div>
++          <button className="pg-ended-btn" onClick={onEndBattle}>
++            {mode === 'quest' && won ? '捕まえようとする！' : 'ゲームを終了'}
++          </button>
++        </div>
++      </div>
++    );
++  }
++
++  // ── Faint: switch Pokemon ─────────────────────────────────────
++  if (phase === 'p1-fainted') {
++    return (
++      <div className="pg-battle-screen pg-faint-screen">
++        <div className="pg-faint-content">
++          <div className="pg-faint-emoji">💀</div>
++          <div className="pg-faint-title">たおれた！</div>
++          <div className="pg-faint-sub">次のポケモンを選ぶ</div>
++          <div className="pg-switch-list">
++            {battleState.p1Team.map((mon, i) => {
++              if (mon.currentHP <= 0 || i === battleState.p1ActiveIndex) return null;
++              const sp = SPECIES[mon.speciesId];
++              return (
++                <button key={i} className="pg-switch-btn" onClick={() => onSwitchPokemon(i)}>
++                  <img src={sp.frontSprite} alt={mon.name} className="pg-switch-sprite" />
++                  <div>
++                    <div className="pg-switch-name">{mon.name}</div>
++                    <div className="pg-switch-hp">HP: {mon.currentHP}/{mon.stats.maxHP}</div>
++                  </div>
++                </button>
++              );
++            })}
++          </div>
++        </div>
++      </div>
++    );
++  }
++
++  const isSelectPhase = phase === 'p1-select' || phase === 'p2-select';
++  const currentLog = log[logIndex];
++
++  return (
++    <div className="pg-battle-screen pg-main">
++      {/* Header */}
++      <div className="pg-battle-header">
++        <div className="pg-turn-info">ターン {turn}</div>
++        <div className="pg-mode-badge">{mode === 'quest' ? 'クエスト' : 'PvP'}</div>
++      </div>
++
++      {/* Opponent area (top) */}
++      <div className="pg-mon-area pg-top">
++        <MonCard mon={topMon} isBack={false} label={topLabel} />
++        <TeamDots team={topTeam} activeIndex={topIndex} />
++      </div>
++
++      {/* Player area (bottom) */}
++      <div className="pg-mon-area pg-bottom">
++        <MonCard mon={bottomMon} isBack={true} label={bottomLabel} />
++        <TeamDots team={bottomTeam} activeIndex={bottomIndex} />
++      </div>
++
++      {/* Battle log */}
++      <div className="pg-battle-log">
++        {phase === 'resolving' && log.length > 0 && (
++          <div className={`pg-log-message pg-log-${currentLog?.type ?? 'info'}`}>
++            {currentLog?.message ?? ''}
++          </div>
++        )}
++        {phase === 'resolving' && (
++          <div className="pg-log-nav">
++            {logIndex < log.length - 1 ? (
++              <button className="pg-log-next-btn" onClick={() => setLogIndex(i => i + 1)}>
++                つぎ ▶
++              </button>
++            ) : (
++              <button className="pg-log-next-btn pg-primary" onClick={onNextTurn}>
++                次のターンへ ▶
++              </button>
++            )}
++          </div>
++        )}
++        {isSelectPhase && (
++          <div className="pg-select-prompt">
++            {isPvpP2 ? 'プレイヤー2' : 'プレイヤー1'}の技を選んでください
++          </div>
++        )}
++      </div>
++
++      {/* Move buttons */}
++      {isSelectPhase && (
++        <div className="pg-move-buttons">
++          {activeMoves.map(moveId => {
++            const move = MOVES[moveId];
++            const mon = isPvpP2 ? battleState.p2Team[battleState.p2ActiveIndex] : battleState.p1Team[battleState.p1ActiveIndex];
++            const cd = mon.cooldowns[moveId] ?? 0;
++            const avail = getMoveAvailable(moveId);
++            return (
++              <button
++                key={moveId}
++                className={`pg-move-btn ${avail ? 'pg-avail' : 'pg-unavail'}`}
++                onClick={() => avail && onMoveSelect(moveId)}
++                disabled={!avail}
++              >
++                <div className="pg-move-name">{move.name}</div>
++                <div className="pg-move-meta">
++                  {move.power ? <span className="pg-move-power">威力 {move.power}</span> : <span className="pg-move-power">—</span>}
++                  <span className={`pg-move-cd ${avail ? 'pg-ready' : 'pg-waiting'}`}>
++                    {avail ? '使える！' : `あと${cd}ターン`}
++                  </span>
++                </div>
++              </button>
++            );
++          })}
++        </div>
++      )}
++    </div>
++  );
++}
+diff --git a/src/components/CollectionScreen.tsx b/src/components/CollectionScreen.tsx
+new file mode 100644
+index 0000000..0042462
+--- /dev/null
++++ b/src/components/CollectionScreen.tsx
+@@ -0,0 +1,100 @@
++import { SPECIES, calcStats } from '@/game/species';
++import type { OwnedPokemon } from '@/game/types';
++
++interface CollectionScreenProps {
++  allPokemon: OwnedPokemon[];
++  team: number[];
++  onTeamChange: (newTeam: number[]) => Promise<void>;
++  onBack: () => void;
++}
++
++function StarRating({ value, max = 31 }: { value: number; max?: number }) {
++  const stars = Math.round((value / max) * 10);
++  return (
++    <div className="pg-stars">
++      {Array.from({ length: 10 }).map((_, i) => (
++        <span key={i} className={`pg-star${i < stars ? ' pg-filled' : ''}`}>★</span>
++      ))}
++    </div>
++  );
++}
++
++export default function CollectionScreen({
++  allPokemon,
++  team,
++  onTeamChange,
++  onBack,
++}: CollectionScreenProps) {
++  const toggleTeam = async (id: number) => {
++    if (!id) return;
++    if (team.includes(id)) {
++      await onTeamChange(team.filter(t => t !== id));
++    } else {
++      if (team.length >= 3) return; // team full
++      await onTeamChange([...team, id]);
++    }
++  };
++
++  return (
++    <div className="pg-collection-screen">
++      <div className="pg-col-header">
++        <button className="pg-back-btn" onClick={onBack}>← もどる</button>
++        <div className="pg-col-title">コレクション</div>
++        <div className="pg-team-count">{team.length}/3</div>
++      </div>
++
++      <div className="pg-pokemon-grid">
++        {allPokemon.length === 0 && (
++          <div className="pg-empty-msg">ポケモンがいません<br />クエストで捕まえよう！</div>
++        )}
++        {allPokemon.map(mon => {
++          if (!mon.id) return null;
++          const sp = SPECIES[mon.speciesId];
++          const stats = calcStats(mon.speciesId, mon.ivs);
++          const inTeam = team.includes(mon.id);
++          const teamFull = team.length >= 3 && !inTeam;
++          return (
++            <div key={mon.id} className={`pg-pokemon-card${inTeam ? ' pg-in-team' : ''}`}>
++              <div className="pg-card-sprite-wrap">
++                <img src={sp.frontSprite} alt={sp.name} className="pg-card-sprite" />
++                {inTeam && <div className="pg-in-team-badge">チーム</div>}
++              </div>
++              <div className="pg-card-info">
++                <div className="pg-card-name">{mon.nickname ?? sp.name}</div>
++                <div className="pg-iv-section">
++                  <div className="pg-iv-row">
++                    <span className="pg-iv-label">HP</span>
++                    <StarRating value={mon.ivs.hp} />
++                    <span className="pg-iv-num">{mon.ivs.hp}</span>
++                  </div>
++                  <div className="pg-iv-row">
++                    <span className="pg-iv-label">ATK</span>
++                    <StarRating value={mon.ivs.atk} />
++                    <span className="pg-iv-num">{mon.ivs.atk}</span>
++                  </div>
++                  <div className="pg-iv-row">
++                    <span className="pg-iv-label">DEF</span>
++                    <StarRating value={mon.ivs.def} />
++                    <span className="pg-iv-num">{mon.ivs.def}</span>
++                  </div>
++                </div>
++                <div className="pg-stats-row">
++                  <div className="pg-stat-chip">HP <strong>{stats.maxHP}</strong></div>
++                  <div className="pg-stat-chip">ATK <strong>{stats.atk}</strong></div>
++                  <div className="pg-stat-chip">DEF <strong>{stats.def}</strong></div>
++                </div>
++                <button
++                  className={`pg-team-toggle-btn${inTeam ? ' pg-remove' : ' pg-add'}${teamFull ? ' pg-disabled' : ''}`}
++                  onClick={() => toggleTeam(mon.id!)}
++                  disabled={teamFull}
++                >
++                  {inTeam ? 'チームから外す' : teamFull ? 'チームが満員' : 'チームに追加'}
++                </button>
++              </div>
++            </div>
++          );
++        })}
++      </div>
++    </div>
++  );
++}
+diff --git a/src/components/GameApp.tsx b/src/components/GameApp.tsx
+new file mode 100644
+index 0000000..4d1042d
+--- /dev/null
++++ b/src/components/GameApp.tsx
+@@ -0,0 +1,295 @@
++import { useState, useEffect, useCallback } from 'react';
++import { initNewPlayer, getGameSave, saveTeam, getAllPokemon, addPokemon } from '@/game/gameDb';
++import { buildBattleState, createWildBattleMon, cpuPickMove } from '@/game/battle';
++import { generateWildMon } from '@/game/species';
++import type { OwnedPokemon, BattleState, MoveId } from '@/game/types';
++import GameHome from './GameHome';
++import BattleScreen from './BattleScreen';
++import CollectionScreen from './CollectionScreen';
++import TeamSelectScreen from './TeamSelectScreen';
++import QuestEncounterScreen from './QuestEncounterScreen';
++
++type Screen =
++  | 'home'
++  | 'collection'
++  | 'team-select'
++  | 'quest'
++  | 'pvp-setup'
++  | 'battle'
++  | 'catch-attempt';
++
++interface GameAppProps {
++  onBack?: () => void;
++}
++
++export default function GameApp({ onBack }: GameAppProps) {
++  const [screen, setScreen] = useState<Screen>('home');
++  const [allPokemon, setAllPokemon] = useState<OwnedPokemon[]>([]);
++  const [team, setTeam] = useState<number[]>([]); // OwnedPokemon IDs
++  const [battleState, setBattleState] = useState<BattleState | null>(null);
++  const [battleMode, setBattleMode] = useState<'quest' | 'pvp'>('quest');
++  const [wildMon, setWildMon] = useState<OwnedPokemon | null>(null);
++  const [catchResult, setCatchResult] = useState<'caught' | 'fled' | null>(null);
++
++  const refresh = useCallback(async () => {
++    await initNewPlayer();
++    const [save, pokemon] = await Promise.all([getGameSave(), getAllPokemon()]);
++    setTeam(save.team);
++    setAllPokemon(pokemon);
++  }, []);
++
++  useEffect(() => {
++    refresh();
++  }, [refresh]);
++
++  const teamPokemon = team
++    .map(id => allPokemon.find(p => p.id === id))
++    .filter((p): p is OwnedPokemon => !!p);
++
++  // ── Quest start ──────────────────────────────────────────────
++  const startQuest = () => {
++    setScreen('quest');
++  };
++
++  const handleQuestFight = () => {
++    if (teamPokemon.length === 0) return;
++    const wild = generateWildMon();
++    setWildMon(wild);
++    const wildBattle = [{ ...wild, id: undefined }];
++    const state = buildBattleState('quest', teamPokemon, wildBattle);
++    // CPU picks move immediately for quest
++    const cpuMon = state.p2Team[state.p2ActiveIndex];
++    const cpuMove = cpuPickMove(cpuMon);
++    const stateWithCpuMove: BattleState = { ...state, p2SelectedMove: cpuMove };
++    setBattleState(stateWithCpuMove);
++    setBattleMode('quest');
++    setScreen('battle');
++  };
++
++  // ── PvP start ────────────────────────────────────────────────
++  const startPvp = () => {
++    setScreen('team-select');
++    setBattleMode('pvp');
++  };
++
++  // ── Team select confirm ──────────────────────────────────────
++  const handleTeamConfirm = async (newTeam: number[]) => {
++    await saveTeam(newTeam);
++    setTeam(newTeam);
++    if (battleMode === 'quest') {
++      setScreen('quest');
++    } else {
++      // PvP: both players use same team (simple implementation)
++      const newTeamPokemon = newTeam
++        .map(id => allPokemon.find(p => p.id === id))
++        .filter((p): p is OwnedPokemon => !!p);
++      const state = buildBattleState('pvp', newTeamPokemon, newTeamPokemon);
++      setBattleState(state);
++      setScreen('battle');
++    }
++  };
++
++  // ── Battle move select ───────────────────────────────────────
++  const handleMoveSelect = useCallback((move: MoveId) => {
++    setBattleState(prev => {
++      if (!prev) return prev;
++      if (prev.phase === 'p1-select') {
++        if (prev.mode === 'quest') {
++          // Auto-pick CPU move
++          const cpuMon = prev.p2Team[prev.p2ActiveIndex];
++          const cpuMove = cpuPickMove(cpuMon);
++          return { ...prev, p1SelectedMove: move, p2SelectedMove: cpuMove, phase: 'resolving' };
++        }
++        return { ...prev, p1SelectedMove: move, phase: 'handoff' };
++      }
++      if (prev.phase === 'p2-select') {
++        return { ...prev, p2SelectedMove: move, phase: 'resolving' };
++      }
++      return prev;
++    });
++  }, []);
++
++  // ── Handoff confirm ──────────────────────────────────────────
++  const handleHandoffConfirm = useCallback(() => {
++    setBattleState(prev => {
++      if (!prev) return prev;
++      return { ...prev, phase: 'p2-select' };
++    });
++  }, []);
++
++  // ── Next turn (resolve) ──────────────────────────────────────
++  const handleNextTurn = useCallback(() => {
++    setBattleState(prev => {
++      if (!prev) return prev;
++      if (prev.phase === 'resolving') {
++        if (prev.winner) {
++          return { ...prev, phase: 'ended' };
++        }
++        // Prepare next turn
++        const next: BattleState = { ...prev, phase: 'p1-select', log: [], p1SelectedMove: null, p2SelectedMove: null };
++        if (next.mode === 'quest') {
++          // Pre-pick CPU move for next turn
++          const cpuMon = next.p2Team[next.p2ActiveIndex];
++          const cpuMove = cpuPickMove(cpuMon);
++          return { ...next, p2SelectedMove: cpuMove };
++        }
++        return next;
++      }
++      return prev;
++    });
++  }, []);
++
++  // ── Switch Pokemon ───────────────────────────────────────────
++  const handleSwitchPokemon = useCallback((index: number) => {
++    setBattleState(prev => {
++      if (!prev) return prev;
++      if (prev.phase === 'p1-fainted') {
++        const next: BattleState = { ...prev, p1ActiveIndex: index, phase: 'resolving' };
++        if (next.mode === 'quest') {
++          // Also let CPU pick move
++          const cpuMon = next.p2Team[next.p2ActiveIndex];
++          const cpuMove = cpuPickMove(cpuMon);
++          return { ...next, p2SelectedMove: cpuMove };
++        }
++        return next;
++      }
++      return prev;
++    });
++  }, []);
++
++  // ── End battle ───────────────────────────────────────────────
++  const handleEndBattle = useCallback(async () => {
++    if (!battleState) {
++      setScreen('home');
++      return;
++    }
++    const won = battleState.winner === 'p1';
++    if (battleMode === 'quest' && won && wildMon) {
++      setCatchResult(null);
++      setScreen('catch-attempt');
++    } else {
++      setBattleState(null);
++      setScreen('home');
++    }
++  }, [battleState, battleMode, wildMon]);
++
++  // ── Catch attempt ────────────────────────────────────────────
++  const handleCatchAttempt = async () => {
++    if (!wildMon) {
++      setScreen('home');
++      return;
++    }
++    const caught = Math.random() < 0.5;
++    if (caught) {
++      const newId = await addPokemon({ speciesId: wildMon.speciesId, ivs: wildMon.ivs });
++      setCatchResult('caught');
++      await refresh();
++      // Auto-add to team if space
++      const save = await getGameSave();
++      if (save.team.length < 3) {
++        await saveTeam([...save.team, newId]);
++        setTeam([...save.team, newId]);
++      }
++    } else {
++      setCatchResult('fled');
++    }
++  };
++
++  const handleCatchDone = () => {
++    setBattleState(null);
++    setWildMon(null);
++    setCatchResult(null);
++    setScreen('home');
++  };
++
++  // ── Render ───────────────────────────────────────────────────
++  if (screen === 'home') {
++    return (
++      <GameHome
++        team={teamPokemon}
++        onQuest={startQuest}
++        onPvp={startPvp}
++        onCollection={() => setScreen('collection')}
++        onBack={onBack}
++      />
++    );
++  }
++
++  if (screen === 'collection') {
++    return (
++      <CollectionScreen
++        allPokemon={allPokemon}
++        team={team}
++        onTeamChange={async (newTeam) => {
++          await saveTeam(newTeam);
++          setTeam(newTeam);
++        }}
++        onBack={() => setScreen('home')}
++      />
++    );
++  }
++
++  if (screen === 'team-select') {
++    return (
++      <TeamSelectScreen
++        allPokemon={allPokemon}
++        currentTeam={team}
++        onConfirm={handleTeamConfirm}
++        onBack={() => setScreen('home')}
++      />
++    );
++  }
++
++  if (screen === 'quest') {
++    return (
++      <QuestEncounterScreen
++        teamSize={teamPokemon.length}
++        onFight={handleQuestFight}
++        onFlee={() => setScreen('home')}
++        onSelectTeam={() => { setBattleMode('quest'); setScreen('team-select'); }}
++      />
++    );
++  }
++
++  if (screen === 'catch-attempt') {
++    return (
++      <QuestEncounterScreen
++        teamSize={teamPokemon.length}
++        wildSpeciesId={wildMon?.speciesId}
++        catchMode
++        catchResult={catchResult}
++        onCatchAttempt={handleCatchAttempt}
++        onFlee={handleCatchDone}
++        onFight={handleQuestFight}
++        onSelectTeam={() => setScreen('team-select')}
++      />
++    );
++  }
++
++  if (screen === 'battle' && battleState) {
++    return (
++      <BattleScreen
++        battleState={battleState}
++        onBattleStateChange={setBattleState}
++        onMoveSelect={handleMoveSelect}
++        onHandoffConfirm={handleHandoffConfirm}
++        onNextTurn={handleNextTurn}
++        onSwitchPokemon={handleSwitchPokemon}
++        onEndBattle={handleEndBattle}
++      />
++    );
++  }
++
++  return (
++    <GameHome
++      team={teamPokemon}
++      onQuest={startQuest}
++      onPvp={startPvp}
++      onCollection={() => setScreen('collection')}
++      onBack={onBack}
++    />
++  );
++}
++
++// Suppress unused import warning - createWildBattleMon is available for future use
++void createWildBattleMon;
+diff --git a/src/components/GameHome.tsx b/src/components/GameHome.tsx
+new file mode 100644
+index 0000000..84e2043
+--- /dev/null
++++ b/src/components/GameHome.tsx
+@@ -0,0 +1,79 @@
++import { SPECIES } from '@/game/species';
++import type { OwnedPokemon } from '@/game/types';
++
++interface GameHomeProps {
++  team: OwnedPokemon[];
++  onQuest: () => void;
++  onPvp: () => void;
++  onCollection: () => void;
++  onBack?: () => void;
++}
++
++export default function GameHome({ team, onQuest, onPvp, onCollection, onBack }: GameHomeProps) {
++  return (
++    <div className="pg-game-home">
++      <div className="pg-bg-overlay" />
++
++      <div className="pg-content">
++        {/* Back button */}
++        <button className="pg-back-btn" onClick={onBack}>
++          ← もどる
++        </button>
++
++        {/* Title */}
++        <div className="pg-title-block">
++          <div className="pg-title-main">ポケバト！</div>
++          <div className="pg-title-sub">みんなのバトルゲーム</div>
++        </div>
++
++        {/* Team preview */}
++        <div className="pg-team-preview">
++          <div className="pg-team-label">あなたのチーム</div>
++          <div className="pg-team-slots">
++            {[0, 1, 2].map(i => {
++              const mon = team[i];
++              if (mon) {
++                const sp = SPECIES[mon.speciesId];
++                return (
++                  <div key={i} className="pg-team-slot">
++                    <img
++                      src={sp.frontSprite}
++                      alt={sp.name}
++                      className="pg-team-sprite"
++                    />
++                    <div className="pg-team-mon-name">{mon.nickname ?? sp.name}</div>
++                  </div>
++                );
++              }
++              return (
++                <div key={i} className="pg-team-slot pg-empty">
++                  <div className="pg-empty-icon">？</div>
++                  <div className="pg-team-mon-name">空</div>
++                </div>
++              );
++            })}
++          </div>
++        </div>
++
++        {/* Action buttons */}
++        <div className="pg-actions">
++          <button className="pg-action-btn pg-quest-btn" onClick={onQuest}>
++            <span className="pg-btn-icon">⚔️</span>
++            <span className="pg-btn-text">クエスト</span>
++            <span className="pg-btn-sub">野生とたたかう</span>
++          </button>
++          <button className="pg-action-btn pg-pvp-btn" onClick={onPvp}>
++            <span className="pg-btn-icon">🆚</span>
++            <span className="pg-btn-text">対戦</span>
++            <span className="pg-btn-sub">1vs1バトル</span>
++          </button>
++          <button className="pg-action-btn pg-collection-btn" onClick={onCollection}>
++            <span className="pg-btn-icon">📋</span>
++            <span className="pg-btn-text">コレクション</span>
++            <span className="pg-btn-sub">もちもの一覧</span>
++          </button>
++        </div>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/components/QuestEncounterScreen.tsx b/src/components/QuestEncounterScreen.tsx
+new file mode 100644
+index 0000000..5dd279c
+--- /dev/null
++++ b/src/components/QuestEncounterScreen.tsx
+@@ -0,0 +1,129 @@
++import { useEffect, useState } from 'react';
++import { SPECIES } from '@/game/species';
++import type { SpeciesId } from '@/game/types';
++
++interface QuestEncounterScreenProps {
++  teamSize: number;
++  wildSpeciesId?: SpeciesId;
++  catchMode?: boolean;
++  catchResult?: 'caught' | 'fled' | null;
++  onFight: () => void;
++  onFlee: () => void;
++  onCatchAttempt?: () => void;
++  onSelectTeam: () => void;
++}
++
++const ALL_SPECIES: SpeciesId[] = ['chakun', 'shikun'];
++
++export default function QuestEncounterScreen({
++  teamSize,
++  wildSpeciesId,
++  catchMode,
++  catchResult,
++  onFight,
++  onFlee,
++  onCatchAttempt,
++  onSelectTeam,
++}: QuestEncounterScreenProps) {
++  // Pick a random species to preview if not given
++  const [previewSpecies] = useState<SpeciesId>(
++    () => wildSpeciesId ?? ALL_SPECIES[Math.floor(Math.random() * ALL_SPECIES.length)]
++  );
++
++  const [animated, setAnimated] = useState(false);
++
++  useEffect(() => {
++    const timer = setTimeout(() => setAnimated(true), 50);
++    return () => clearTimeout(timer);
++  }, []);
++
++  const sp = SPECIES[previewSpecies];
++
++  if (catchMode) {
++    return (
++      <div className="pg-quest-screen">
++        <div className={`pg-wild-mon${animated ? ' pg-show' : ''}`}>
++          <img src={sp.frontSprite} alt={sp.name} className="pg-wild-sprite pg-catch-anim" />
++        </div>
++
++        {catchResult === null && (
++          <>
++            <div className="pg-encounter-title">捕まえようとする！</div>
++            <div className="pg-encounter-sub">{sp.name}をゲットできるかも！</div>
++            <div className="pg-btn-row">
++              <button className="pg-quest-action-btn pg-catch-btn" onClick={onCatchAttempt}>
++                ボールを投げる！
++              </button>
++              <button className="pg-quest-action-btn pg-flee-btn" onClick={onFlee}>
++                あきらめる
++              </button>
++            </div>
++          </>
++        )}
++
++        {catchResult === 'caught' && (
++          <>
++            <div className="pg-result-emoji">🎉</div>
++            <div className="pg-encounter-title pg-caught-title">捕まえた！</div>
++            <div className="pg-encounter-sub">{sp.name}があなたのポケモンになった！</div>
++            <button className="pg-quest-action-btn pg-done-btn" onClick={onFlee}>
++              つづける
++            </button>
++          </>
++        )}
++
++        {catchResult === 'fled' && (
++          <>
++            <div className="pg-result-emoji">💨</div>
++            <div className="pg-encounter-title">逃げられた…</div>
++            <div className="pg-encounter-sub">また次回チャレンジしよう！</div>
++            <button className="pg-quest-action-btn pg-flee-btn" onClick={onFlee}>
++              もどる
++            </button>
++          </>
++        )}
++      </div>
++    );
++  }
++
++  return (
++    <div className="pg-quest-screen">
++      {teamSize === 0 && (
++        <div className="pg-warning-banner">
++          ポケモンがいません！チームを選んでください
++        </div>
++      )}
++
++      <div className={`pg-wild-mon${animated ? ' pg-show' : ''}`}>
++        <div className="pg-silhouette-wrap">
++          <img
++            src={sp.frontSprite}
++            alt="野生のポケモン"
++            className="pg-wild-sprite pg-encounter-bounce"
++            style={{ filter: 'brightness(0) drop-shadow(0 0 20px rgba(147,112,219,0.8))' }}
++          />
++        </div>
++      </div>
++
++      <div className="pg-encounter-title">野生の{sp.name}が現れた！</div>
++      <div className="pg-encounter-sub">どうする？</div>
++
++      <div className="pg-btn-row">
++        <button
++          className="pg-quest-action-btn pg-fight-btn"
++          onClick={onFight}
++          disabled={teamSize === 0}
++          style={{ opacity: teamSize === 0 ? 0.4 : 1, cursor: teamSize === 0 ? 'not-allowed' : 'pointer' }}
++        >
++          ⚔️ たたかう！
++        </button>
++        <button className="pg-quest-action-btn pg-team-btn" onClick={onSelectTeam}>
++          👥 チームを変える
++        </button>
++        <button className="pg-quest-action-btn pg-flee-btn" onClick={onFlee}>
++          💨 にげる
++        </button>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/components/TeamSelectScreen.tsx b/src/components/TeamSelectScreen.tsx
+new file mode 100644
+index 0000000..0c6150e
+--- /dev/null
++++ b/src/components/TeamSelectScreen.tsx
+@@ -0,0 +1,137 @@
++import { useState } from 'react';
++import { SPECIES, calcStats } from '@/game/species';
++import type { OwnedPokemon } from '@/game/types';
++
++interface TeamSelectScreenProps {
++  allPokemon: OwnedPokemon[];
++  currentTeam: number[];
++  onConfirm: (team: number[]) => void;
++  onBack: () => void;
++}
++
++export default function TeamSelectScreen({
++  allPokemon,
++  currentTeam,
++  onConfirm,
++  onBack,
++}: TeamSelectScreenProps) {
++  const [selected, setSelected] = useState<number[]>(currentTeam.slice(0, 3));
++
++  const toggle = (id: number) => {
++    setSelected(prev => {
++      if (prev.includes(id)) {
++        return prev.filter(x => x !== id);
++      }
++      if (prev.length >= 3) return prev;
++      return [...prev, id];
++    });
++  };
++
++  const moveUp = (index: number) => {
++    if (index === 0) return;
++    setSelected(prev => {
++      const next = [...prev];
++      [next[index - 1], next[index]] = [next[index], next[index - 1]];
++      return next;
++    });
++  };
++
++  const moveDown = (index: number) => {
++    if (index >= selected.length - 1) return;
++    setSelected(prev => {
++      const next = [...prev];
++      [next[index], next[index + 1]] = [next[index + 1], next[index]];
++      return next;
++    });
++  };
++
++  const removeFromSlot = (index: number) => {
++    setSelected(prev => prev.filter((_, i) => i !== index));
++  };
++
++  const canConfirm = selected.length === 3;
++
++  return (
++    <div className="pg-team-select-screen">
++      <div className="pg-ts-header">
++        <button className="pg-back-btn" onClick={onBack}>← もどる</button>
++        <div className="pg-ts-title">チームを選ぶ</div>
++        <div className="pg-ts-count">{selected.length}/3</div>
++      </div>
++
++      {/* Selected slots */}
++      <div className="pg-selected-slots">
++        {[0, 1, 2].map(i => {
++          const id = selected[i];
++          const mon = id ? allPokemon.find(p => p.id === id) : undefined;
++          return (
++            <div key={i} className={`pg-slot${mon ? ' pg-filled' : ''}`}>
++              {mon ? (
++                <>
++                  <img
++                    src={SPECIES[mon.speciesId].frontSprite}
++                    alt={mon.nickname ?? SPECIES[mon.speciesId].name}
++                    className="pg-slot-sprite"
++                  />
++                  <div className="pg-slot-name">{mon.nickname ?? SPECIES[mon.speciesId].name}</div>
++                  <div className="pg-slot-controls">
++                    <button className="pg-slot-ctrl" onClick={() => moveUp(i)} disabled={i === 0}>↑</button>
++                    <button className="pg-slot-ctrl" onClick={() => moveDown(i)} disabled={i >= selected.length - 1}>↓</button>
++                    <button className="pg-slot-ctrl pg-remove" onClick={() => removeFromSlot(i)}>×</button>
++                  </div>
++                </>
++              ) : (
++                <div className="pg-slot-empty-icon">＋</div>
++              )}
++            </div>
++          );
++        })}
++      </div>
++
++      {/* Collection list */}
++      <div className="pg-collection-list">
++        <div className="pg-list-label">ポケモンを選ぶ</div>
++        {allPokemon.length === 0 && (
++          <div className="pg-empty-msg">ポケモンがいません</div>
++        )}
++        {allPokemon.map(mon => {
++          if (!mon.id) return null;
++          const sp = SPECIES[mon.speciesId];
++          const stats = calcStats(mon.speciesId, mon.ivs);
++          const idx = selected.indexOf(mon.id);
++          const isSelected = idx !== -1;
++          const isFull = selected.length >= 3 && !isSelected;
++          return (
++            <button
++              key={mon.id}
++              className={`pg-mon-item${isSelected ? ' pg-selected' : ''}${isFull ? ' pg-disabled' : ''}`}
++              onClick={() => toggle(mon.id!)}
++              disabled={isFull}
++            >
++              <div className="pg-mon-rank">{isSelected ? `#${idx + 1}` : ''}</div>
++              <img src={sp.frontSprite} alt={sp.name} className="pg-mon-sprite" />
++              <div className="pg-mon-details">
++                <div className="pg-mon-name">{mon.nickname ?? sp.name}</div>
++                <div className="pg-mon-stats">
++                  HP:{stats.maxHP} ATK:{stats.atk} DEF:{stats.def}
++                </div>
++              </div>
++              {isSelected && <div className="pg-check-icon">✓</div>}
++            </button>
++          );
++        })}
++      </div>
++
++      {/* Confirm button */}
++      <div className="pg-confirm-wrap">
++        <button
++          className={`pg-confirm-btn${canConfirm ? ' pg-active' : ' pg-inactive'}`}
++          onClick={() => canConfirm && onConfirm(selected)}
++          disabled={!canConfirm}
++        >
++          {canConfirm ? 'バトル開始！' : `あと${3 - selected.length}体選ぼう`}
++        </button>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/game.css b/src/game.css
+new file mode 100644
+index 0000000..89b260b
+--- /dev/null
++++ b/src/game.css
+@@ -0,0 +1,846 @@
++/* ============================================================
++   Pokemon Game (Turn Battle) — Global Styles
++   All classes prefixed with pg- to avoid Phaser collisions
++   ============================================================ */
++
++/* ── GameHome ─────────────────────────────────────────────── */
++
++.pg-game-home {
++  position: fixed;
++  inset: 0;
++  display: flex;
++  flex-direction: column;
++  align-items: center;
++  justify-content: center;
++  overflow: hidden;
++  font-family: system-ui, sans-serif;
++}
++
++.pg-bg-overlay {
++  position: absolute;
++  inset: 0;
++  background: linear-gradient(160deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
++  z-index: 0;
++}
++
++.pg-content {
++  position: relative;
++  z-index: 1;
++  width: 100%;
++  max-width: 440px;
++  padding: 20px 20px 40px;
++  display: flex;
++  flex-direction: column;
++  gap: 24px;
++}
++
++.pg-back-btn {
++  display: inline-flex;
++  align-items: center;
++  color: rgba(255,255,255,0.65);
++  font-size: 14px;
++  font-weight: 600;
++  text-decoration: none;
++  padding: 6px 0;
++  transition: color 0.18s;
++  background: none;
++  border: none;
++  cursor: pointer;
++  font-family: inherit;
++}
++.pg-back-btn:hover { color: #fff; }
++
++.pg-title-block {
++  text-align: center;
++}
++.pg-title-main {
++  font-size: 52px;
++  font-weight: 900;
++  color: #fff;
++  letter-spacing: -1px;
++  text-shadow: 0 0 30px rgba(147, 112, 219, 0.8), 0 4px 20px rgba(0,0,0,0.6);
++  line-height: 1;
++}
++.pg-title-sub {
++  font-size: 13px;
++  color: rgba(255,255,255,0.55);
++  margin-top: 6px;
++  letter-spacing: 0.15em;
++}
++
++.pg-team-preview {
++  background: rgba(255,255,255,0.06);
++  border: 1px solid rgba(255,255,255,0.12);
++  border-radius: 20px;
++  padding: 16px;
++}
++.pg-team-label {
++  font-size: 11px;
++  font-weight: 700;
++  letter-spacing: 0.1em;
++  color: rgba(255,255,255,0.5);
++  text-transform: uppercase;
++  margin-bottom: 12px;
++}
++.pg-team-slots {
++  display: flex;
++  gap: 10px;
++  justify-content: center;
++}
++.pg-team-slot {
++  flex: 1;
++  display: flex;
++  flex-direction: column;
++  align-items: center;
++  gap: 4px;
++  background: rgba(255,255,255,0.05);
++  border-radius: 14px;
++  padding: 10px 6px;
++  border: 1px solid rgba(255,255,255,0.08);
++}
++.pg-team-slot.pg-empty {
++  opacity: 0.4;
++}
++.pg-team-sprite {
++  width: 56px;
++  height: 56px;
++  object-fit: contain;
++  image-rendering: pixelated;
++}
++.pg-empty-icon {
++  width: 56px;
++  height: 56px;
++  display: flex;
++  align-items: center;
++  justify-content: center;
++  font-size: 24px;
++  color: rgba(255,255,255,0.3);
++}
++.pg-team-mon-name {
++  font-size: 10px;
++  font-weight: 700;
++  color: rgba(255,255,255,0.7);
++  text-align: center;
++  white-space: nowrap;
++  overflow: hidden;
++  text-overflow: ellipsis;
++  width: 100%;
++}
++
++.pg-actions {
++  display: flex;
++  flex-direction: column;
++  gap: 10px;
++}
++.pg-action-btn {
++  display: flex;
++  align-items: center;
++  gap: 14px;
++  padding: 16px 20px;
++  border-radius: 18px;
++  border: none;
++  cursor: pointer;
++  transition: transform 0.15s, box-shadow 0.15s;
++  width: 100%;
++  text-align: left;
++  font-family: inherit;
++}
++.pg-action-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
++.pg-action-btn:active { transform: translateY(0); }
++
++.pg-quest-btn {
++  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
++}
++.pg-pvp-btn {
++  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
++}
++.pg-collection-btn {
++  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
++}
++
++.pg-btn-icon {
++  font-size: 28px;
++  flex-shrink: 0;
++  line-height: 1;
++}
++.pg-btn-text {
++  font-size: 18px;
++  font-weight: 800;
++  color: #fff;
++  text-shadow: 0 1px 4px rgba(0,0,0,0.3);
++  flex: 1;
++}
++.pg-btn-sub {
++  font-size: 11px;
++  color: rgba(255,255,255,0.75);
++  font-weight: 600;
++}
++
++/* ── BattleScreen ─────────────────────────────────────────── */
++
++.pg-battle-screen {
++  position: fixed;
++  inset: 0;
++  background: linear-gradient(160deg, #0f0c29 0%, #302b63 60%, #24243e 100%);
++  display: flex;
++  flex-direction: column;
++  gap: 10px;
++  padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
++  font-family: system-ui, sans-serif;
++  overflow: hidden;
++}
++
++.pg-battle-screen.pg-handoff {
++  background: #0f0c29;
++  align-items: center;
++  justify-content: center;
++}
++
++.pg-battle-screen.pg-ended {
++  background: linear-gradient(160deg, #0f0c29, #302b63);
++  align-items: center;
++  justify-content: center;
++}
++
++.pg-battle-screen.pg-faint-screen {
++  background: linear-gradient(160deg, #0f0c29, #302b63);
++  align-items: center;
++  justify-content: center;
++}
++
++.pg-handoff-content {
++  text-align: center;
++  display: flex;
++  flex-direction: column;
++  align-items: center;
++  gap: 16px;
++  padding: 32px;
++}
++.pg-handoff-emoji { font-size: 64px; }
++.pg-handoff-title { font-size: 24px; font-weight: 900; color: #fff; }
++.pg-handoff-sub { font-size: 14px; color: rgba(255,255,255,0.6); }
++.pg-handoff-btn {
++  margin-top: 16px;
++  padding: 16px 40px;
++  background: linear-gradient(135deg, #4facfe, #00f2fe);
++  border-radius: 999px;
++  font-size: 20px;
++  font-weight: 800;
++  color: #fff;
++  border: none;
++  cursor: pointer;
++  font-family: inherit;
++  transition: transform 0.15s;
++}
++.pg-handoff-btn:hover { transform: scale(1.05); }
++
++.pg-ended-content {
++  text-align: center;
++  display: flex;
++  flex-direction: column;
++  align-items: center;
++  gap: 20px;
++  padding: 32px;
++}
++.pg-ended-emoji { font-size: 72px; }
++.pg-ended-title { font-size: 28px; font-weight: 900; color: #fff; }
++.pg-ended-btn {
++  padding: 16px 36px;
++  background: linear-gradient(135deg, #f093fb, #f5576c);
++  border-radius: 999px;
++  font-size: 18px;
++  font-weight: 800;
++  color: #fff;
++  border: none;
++  cursor: pointer;
++  font-family: inherit;
++  transition: transform 0.15s;
++}
++.pg-ended-btn:hover { transform: scale(1.05); }
++
++.pg-faint-content {
++  text-align: center;
++  display: flex;
++  flex-direction: column;
++  align-items: center;
++  gap: 16px;
++  padding: 24px;
++  width: 100%;
++  max-width: 360px;
++}
++.pg-faint-emoji { font-size: 48px; }
++.pg-faint-title { font-size: 28px; font-weight: 900; color: #fff; }
++.pg-faint-sub { font-size: 14px; color: rgba(255,255,255,0.6); }
++.pg-switch-list { display: flex; flex-direction: column; gap: 10px; width: 100%; }
++.pg-switch-btn {
++  display: flex;
++  align-items: center;
++  gap: 12px;
++  padding: 14px 16px;
++  background: rgba(255,255,255,0.08);
++  border: 1.5px solid rgba(255,255,255,0.15);
++  border-radius: 14px;
++  cursor: pointer;
++  color: #fff;
++  font-family: inherit;
++  transition: background 0.15s;
++}
++.pg-switch-btn:hover { background: rgba(255,255,255,0.15); }
++.pg-switch-sprite { width: 48px; height: 48px; object-fit: contain; image-rendering: pixelated; }
++.pg-switch-name { font-size: 16px; font-weight: 800; text-align: left; }
++.pg-switch-hp { font-size: 12px; color: rgba(255,255,255,0.6); text-align: left; }
++
++.pg-battle-header {
++  display: flex;
++  align-items: center;
++  justify-content: space-between;
++  flex-shrink: 0;
++}
++.pg-turn-info {
++  font-size: 13px;
++  font-weight: 700;
++  color: rgba(255,255,255,0.7);
++}
++.pg-mode-badge {
++  font-size: 11px;
++  font-weight: 800;
++  color: rgba(255,255,255,0.55);
++  background: rgba(255,255,255,0.08);
++  padding: 4px 10px;
++  border-radius: 999px;
++  letter-spacing: 0.06em;
++}
++
++.pg-mon-area {
++  display: flex;
++  flex-direction: column;
++  gap: 6px;
++  flex-shrink: 0;
++}
++
++.pg-battle-log {
++  flex: 1;
++  display: flex;
++  flex-direction: column;
++  align-items: center;
++  justify-content: center;
++  gap: 10px;
++  padding: 10px;
++  background: rgba(0,0,0,0.2);
++  border-radius: 16px;
++  border: 1px solid rgba(255,255,255,0.06);
++  min-height: 80px;
++}
++.pg-log-message {
++  font-size: 16px;
++  font-weight: 700;
++  color: #fff;
++  text-align: center;
++  line-height: 1.5;
++}
++.pg-log-damage { color: #f87171; }
++.pg-log-miss { color: #facc15; }
++.pg-log-status { color: #60a5fa; }
++.pg-log-info { color: rgba(255,255,255,0.8); }
++.pg-log-catch { color: #34d399; }
++
++.pg-log-nav { display: flex; justify-content: center; }
++.pg-log-next-btn {
++  padding: 10px 24px;
++  background: rgba(255,255,255,0.12);
++  border: 1px solid rgba(255,255,255,0.2);
++  border-radius: 999px;
++  color: #fff;
++  font-size: 14px;
++  font-weight: 700;
++  cursor: pointer;
++  font-family: inherit;
++  transition: background 0.15s;
++}
++.pg-log-next-btn.pg-primary { background: linear-gradient(135deg, #4facfe, #00f2fe); border-color: transparent; }
++.pg-log-next-btn:hover { background: rgba(255,255,255,0.2); }
++.pg-log-next-btn.pg-primary:hover { opacity: 0.9; }
++
++.pg-select-prompt {
++  font-size: 13px;
++  font-weight: 700;
++  color: rgba(255,255,255,0.6);
++  text-align: center;
++}
++
++.pg-move-buttons {
++  display: flex;
++  flex-direction: column;
++  gap: 8px;
++  flex-shrink: 0;
++}
++.pg-move-btn {
++  display: flex;
++  align-items: center;
++  justify-content: space-between;
++  padding: 13px 16px;
++  border-radius: 14px;
++  border: none;
++  cursor: pointer;
++  font-family: inherit;
++  transition: transform 0.12s, opacity 0.15s;
++  text-align: left;
++}
++.pg-move-btn.pg-avail {
++  background: rgba(255,255,255,0.12);
++  border: 1.5px solid rgba(255,255,255,0.2);
++}
++.pg-move-btn.pg-avail:hover { transform: translateX(3px); background: rgba(255,255,255,0.18); }
++.pg-move-btn.pg-unavail {
++  background: rgba(255,255,255,0.04);
++  border: 1.5px solid rgba(255,255,255,0.06);
++  opacity: 0.5;
++  cursor: not-allowed;
++}
++.pg-move-name { font-size: 16px; font-weight: 800; color: #fff; }
++.pg-move-meta { display: flex; gap: 8px; align-items: center; }
++.pg-move-power { font-size: 11px; color: rgba(255,255,255,0.55); font-weight: 600; }
++.pg-move-cd { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
++.pg-move-cd.pg-ready { background: rgba(74,222,128,0.2); color: #4ade80; }
++.pg-move-cd.pg-waiting { background: rgba(248,113,113,0.15); color: #f87171; }
++
++/* ── HpBar ───────────────────────────────────────────────── */
++
++.pg-hp-bar-wrap { display: flex; align-items: center; gap: 6px; }
++.pg-hp-bar-bg { flex: 1; height: 8px; background: rgba(0,0,0,0.3); border-radius: 999px; overflow: hidden; }
++.pg-hp-bar-fill { height: 100%; border-radius: 999px; transition: width 0.4s ease; }
++.pg-hp-text { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.85); white-space: nowrap; min-width: 48px; text-align: right; }
++
++/* ── TeamDots ─────────────────────────────────────────────── */
++
++.pg-team-dots { display: flex; gap: 5px; align-items: center; }
++.pg-dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.25); border: 1.5px solid rgba(255,255,255,0.3); }
++.pg-dot.pg-active { background: #4ade80; border-color: #4ade80; }
++.pg-dot.pg-fainted { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.1); }
++
++/* ── MonCard ──────────────────────────────────────────────── */
++
++.pg-mon-card {
++  display: flex;
++  align-items: center;
++  gap: 10px;
++  padding: 12px 14px;
++  background: rgba(255,255,255,0.06);
++  border-radius: 16px;
++  border: 1px solid rgba(255,255,255,0.1);
++}
++.pg-mon-info { flex: 1; min-width: 0; }
++.pg-mon-name { font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
++.pg-mon-label { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.5); letter-spacing: 0.08em; }
++.pg-mon-sprite { width: 72px; height: 72px; object-fit: contain; flex-shrink: 0; image-rendering: pixelated; }
++
++/* ── CollectionScreen ─────────────────────────────────────── */
++
++.pg-collection-screen {
++  position: fixed;
++  inset: 0;
++  background: linear-gradient(160deg, #0f0c29 0%, #302b63 60%, #24243e 100%);
++  display: flex;
++  flex-direction: column;
++  font-family: system-ui, sans-serif;
++  overflow: hidden;
++}
++
++.pg-col-header {
++  display: flex;
++  align-items: center;
++  gap: 12px;
++  padding: 16px 16px 12px;
++  flex-shrink: 0;
++  border-bottom: 1px solid rgba(255,255,255,0.08);
++}
++.pg-col-title {
++  flex: 1;
++  font-size: 18px;
++  font-weight: 900;
++  color: #fff;
++}
++.pg-team-count {
++  font-size: 14px;
++  font-weight: 700;
++  color: rgba(255,255,255,0.6);
++  background: rgba(255,255,255,0.08);
++  padding: 4px 10px;
++  border-radius: 999px;
++}
++
++.pg-pokemon-grid {
++  flex: 1;
++  overflow-y: auto;
++  -webkit-overflow-scrolling: touch;
++  padding: 14px 14px calc(14px + env(safe-area-inset-bottom));
++  display: flex;
++  flex-direction: column;
++  gap: 12px;
++}
++
++.pg-empty-msg {
++  text-align: center;
++  color: rgba(255,255,255,0.5);
++  font-size: 15px;
++  font-weight: 600;
++  padding: 40px 20px;
++  line-height: 1.8;
++}
++
++.pg-pokemon-card {
++  display: flex;
++  gap: 12px;
++  background: rgba(255,255,255,0.05);
++  border: 1.5px solid rgba(255,255,255,0.08);
++  border-radius: 18px;
++  padding: 14px;
++  transition: border-color 0.2s;
++}
++.pg-pokemon-card.pg-in-team {
++  border-color: rgba(74,222,128,0.4);
++  background: rgba(74,222,128,0.05);
++}
++
++.pg-card-sprite-wrap {
++  position: relative;
++  flex-shrink: 0;
++}
++.pg-card-sprite {
++  width: 72px;
++  height: 72px;
++  object-fit: contain;
++  image-rendering: pixelated;
++}
++.pg-in-team-badge {
++  position: absolute;
++  bottom: 0;
++  left: 50%;
++  transform: translateX(-50%);
++  background: #4ade80;
++  color: #0f0c29;
++  font-size: 9px;
++  font-weight: 800;
++  padding: 2px 6px;
++  border-radius: 999px;
++  white-space: nowrap;
++}
++
++.pg-card-info {
++  flex: 1;
++  min-width: 0;
++  display: flex;
++  flex-direction: column;
++  gap: 6px;
++}
++.pg-card-name {
++  font-size: 16px;
++  font-weight: 900;
++  color: #fff;
++}
++
++.pg-iv-section { display: flex; flex-direction: column; gap: 3px; }
++.pg-iv-row { display: flex; align-items: center; gap: 6px; }
++.pg-iv-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.45); width: 28px; flex-shrink: 0; letter-spacing: 0.05em; }
++.pg-iv-num { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.6); min-width: 20px; }
++
++.pg-stats-row { display: flex; gap: 6px; }
++.pg-stat-chip { font-size: 11px; color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.07); border-radius: 8px; padding: 3px 8px; }
++.pg-stat-chip strong { color: #fff; font-weight: 800; }
++
++.pg-team-toggle-btn {
++  align-self: flex-start;
++  padding: 7px 14px;
++  border-radius: 999px;
++  font-size: 12px;
++  font-weight: 700;
++  border: none;
++  cursor: pointer;
++  font-family: inherit;
++  transition: opacity 0.15s, transform 0.12s;
++}
++.pg-team-toggle-btn:hover:not(.pg-disabled) { transform: scale(1.04); }
++.pg-team-toggle-btn.pg-add { background: linear-gradient(135deg, #4facfe, #00f2fe); color: #0f0c29; }
++.pg-team-toggle-btn.pg-remove { background: rgba(248,113,113,0.2); color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
++.pg-team-toggle-btn.pg-disabled { opacity: 0.4; cursor: not-allowed; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.4); }
++
++/* ── StarRating ───────────────────────────────────────────── */
++
++.pg-stars { display: flex; gap: 1px; }
++.pg-star { font-size: 8px; color: rgba(255,255,255,0.15); line-height: 1; }
++.pg-star.pg-filled { color: #facc15; }
++
++/* ── TeamSelectScreen ─────────────────────────────────────── */
++
++.pg-team-select-screen {
++  position: fixed;
++  inset: 0;
++  background: linear-gradient(160deg, #0f0c29 0%, #302b63 60%, #24243e 100%);
++  display: flex;
++  flex-direction: column;
++  font-family: system-ui, sans-serif;
++  overflow: hidden;
++}
++
++.pg-ts-header {
++  display: flex;
++  align-items: center;
++  gap: 12px;
++  padding: 16px 16px 12px;
++  flex-shrink: 0;
++  border-bottom: 1px solid rgba(255,255,255,0.08);
++}
++.pg-ts-title {
++  flex: 1;
++  font-size: 18px;
++  font-weight: 900;
++  color: #fff;
++}
++.pg-ts-count {
++  font-size: 14px;
++  font-weight: 700;
++  color: rgba(255,255,255,0.6);
++  background: rgba(255,255,255,0.08);
++  padding: 4px 10px;
++  border-radius: 999px;
++}
++
++.pg-selected-slots {
++  display: flex;
++  gap: 10px;
++  padding: 14px 16px;
++  flex-shrink: 0;
++  border-bottom: 1px solid rgba(255,255,255,0.06);
++}
++.pg-slot {
++  flex: 1;
++  display: flex;
++  flex-direction: column;
++  align-items: center;
++  gap: 4px;
++  background: rgba(255,255,255,0.05);
++  border: 1.5px solid rgba(255,255,255,0.08);
++  border-radius: 14px;
++  padding: 10px 6px;
++  min-height: 100px;
++  justify-content: center;
++}
++.pg-slot.pg-filled {
++  border-color: rgba(74,222,128,0.35);
++  background: rgba(74,222,128,0.05);
++}
++.pg-slot-sprite {
++  width: 50px;
++  height: 50px;
++  object-fit: contain;
++  image-rendering: pixelated;
++}
++.pg-slot-name {
++  font-size: 10px;
++  font-weight: 700;
++  color: #fff;
++  text-align: center;
++  line-height: 1.2;
++}
++.pg-slot-controls {
++  display: flex;
++  gap: 3px;
++}
++.pg-slot-ctrl {
++  font-size: 11px;
++  padding: 3px 5px;
++  background: rgba(255,255,255,0.1);
++  border: none;
++  border-radius: 5px;
++  color: rgba(255,255,255,0.7);
++  cursor: pointer;
++  font-family: inherit;
++}
++.pg-slot-ctrl:disabled { opacity: 0.25; cursor: default; }
++.pg-slot-ctrl.pg-remove { color: #f87171; background: rgba(248,113,113,0.15); }
++.pg-slot-empty-icon {
++  font-size: 24px;
++  color: rgba(255,255,255,0.2);
++}
++
++.pg-collection-list {
++  flex: 1;
++  overflow-y: auto;
++  -webkit-overflow-scrolling: touch;
++  padding: 10px 14px 0;
++  display: flex;
++  flex-direction: column;
++  gap: 7px;
++}
++.pg-list-label {
++  font-size: 11px;
++  font-weight: 700;
++  color: rgba(255,255,255,0.4);
++  letter-spacing: 0.08em;
++  text-transform: uppercase;
++  margin-bottom: 4px;
++}
++.pg-mon-item {
++  display: flex;
++  align-items: center;
++  gap: 10px;
++  padding: 11px 14px;
++  background: rgba(255,255,255,0.05);
++  border: 1.5px solid rgba(255,255,255,0.07);
++  border-radius: 14px;
++  cursor: pointer;
++  font-family: inherit;
++  text-align: left;
++  transition: background 0.15s;
++  width: 100%;
++}
++.pg-mon-item.pg-selected {
++  background: rgba(74,222,128,0.08);
++  border-color: rgba(74,222,128,0.35);
++}
++.pg-mon-item.pg-disabled { opacity: 0.35; cursor: not-allowed; }
++.pg-mon-item:hover:not(.pg-disabled) { background: rgba(255,255,255,0.1); }
++
++.pg-mon-rank {
++  font-size: 12px;
++  font-weight: 800;
++  color: #4ade80;
++  min-width: 20px;
++  text-align: center;
++}
++.pg-mon-details { flex: 1; min-width: 0; }
++.pg-mon-stats { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px; }
++.pg-check-icon { font-size: 18px; color: #4ade80; font-weight: 900; flex-shrink: 0; }
++
++.pg-confirm-wrap {
++  padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
++  flex-shrink: 0;
++  border-top: 1px solid rgba(255,255,255,0.06);
++}
++.pg-confirm-btn {
++  width: 100%;
++  padding: 16px;
++  border-radius: 18px;
++  font-size: 17px;
++  font-weight: 900;
++  border: none;
++  cursor: pointer;
++  font-family: inherit;
++  transition: transform 0.15s, opacity 0.15s;
++}
++.pg-confirm-btn.pg-active {
++  background: linear-gradient(135deg, #f093fb, #f5576c);
++  color: #fff;
++  box-shadow: 0 6px 20px rgba(240,147,251,0.35);
++}
++.pg-confirm-btn.pg-active:hover { transform: scale(1.02); }
++.pg-confirm-btn.pg-inactive {
++  background: rgba(255,255,255,0.06);
++  color: rgba(255,255,255,0.35);
++  cursor: not-allowed;
++}
++
++/* ── QuestEncounterScreen ────────────────────────────────── */
++
++.pg-quest-screen {
++  position: fixed;
++  inset: 0;
++  background: linear-gradient(160deg, #0f0c29 0%, #302b63 60%, #24243e 100%);
++  display: flex;
++  flex-direction: column;
++  align-items: center;
++  justify-content: center;
++  gap: 16px;
++  padding: 32px 24px calc(32px + env(safe-area-inset-bottom));
++  font-family: system-ui, sans-serif;
++  text-align: center;
++}
++
++.pg-warning-banner {
++  background: rgba(248,113,113,0.2);
++  border: 1px solid rgba(248,113,113,0.4);
++  border-radius: 12px;
++  padding: 10px 16px;
++  font-size: 13px;
++  font-weight: 700;
++  color: #fca5a5;
++  width: 100%;
++  max-width: 320px;
++}
++
++.pg-wild-mon {
++  opacity: 0;
++  transform: translateY(30px) scale(0.7);
++  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
++}
++.pg-wild-mon.pg-show { opacity: 1; transform: translateY(0) scale(1); }
++
++.pg-silhouette-wrap { position: relative; }
++
++.pg-wild-sprite {
++  width: 140px;
++  height: 140px;
++  object-fit: contain;
++  image-rendering: pixelated;
++  filter: drop-shadow(0 0 20px rgba(147,112,219,0.6));
++}
++
++.pg-catch-anim {
++  animation: pg-catchBounce 0.8s ease infinite alternate;
++}
++
++@keyframes pg-catchBounce {
++  from { transform: translateY(0); }
++  to { transform: translateY(-12px); }
++}
++
++.pg-encounter-bounce {
++  animation: pg-eBounce 1.2s ease-in-out infinite alternate;
++}
++
++@keyframes pg-eBounce {
++  from { transform: translateY(0) rotate(-3deg); }
++  to { transform: translateY(-10px) rotate(3deg); }
++}
++
++.pg-result-emoji { font-size: 64px; }
++
++.pg-encounter-title {
++  font-size: 26px;
++  font-weight: 900;
++  color: #fff;
++  text-shadow: 0 2px 12px rgba(0,0,0,0.5);
++}
++.pg-encounter-title.pg-caught-title { color: #4ade80; font-size: 28px; }
++
++.pg-encounter-sub {
++  font-size: 15px;
++  color: rgba(255,255,255,0.65);
++  line-height: 1.5;
++}
++
++.pg-btn-row {
++  display: flex;
++  flex-direction: column;
++  gap: 10px;
++  width: 100%;
++  max-width: 320px;
++}
++
++.pg-quest-action-btn {
++  padding: 15px 24px;
++  border-radius: 999px;
++  font-size: 17px;
++  font-weight: 800;
++  border: none;
++  cursor: pointer;
++  font-family: inherit;
++  transition: transform 0.15s;
++  width: 100%;
++}
++.pg-quest-action-btn:hover:not(:disabled) { transform: scale(1.03); }
++.pg-fight-btn { background: linear-gradient(135deg, #f093fb, #f5576c); color: #fff; }
++.pg-team-btn { background: linear-gradient(135deg, #4facfe, #00f2fe); color: #0f0c29; }
++.pg-flee-btn { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.15); }
++.pg-catch-btn { background: linear-gradient(135deg, #f093fb, #f5576c); color: #fff; }
++.pg-done-btn { background: linear-gradient(135deg, #43e97b, #38f9d7); color: #0f0c29; }
+diff --git a/src/game/battle.ts b/src/game/battle.ts
+new file mode 100644
+index 0000000..8c49e06
+--- /dev/null
++++ b/src/game/battle.ts
+@@ -0,0 +1,271 @@
++import type {
++  BattleMon, BattleState, BattleLogEntry, MoveId, OwnedPokemon, SpeciesId,
++} from '@/game/types';
++import { SPECIES, calcStats, generateWildMon } from '@/game/species';
++import { MOVES } from '@/game/moves';
++
++// ── Factory helpers ──────────────────────────────────────────
++
++export function createBattleMon(owned: OwnedPokemon): BattleMon {
++  const sp = SPECIES[owned.speciesId];
++  const stats = calcStats(owned.speciesId, owned.ivs);
++  const cooldowns: Record<MoveId, number> = {} as Record<MoveId, number>;
++  for (const mid of sp.moves) cooldowns[mid] = 0;
++  return {
++    ownedId: owned.id,
++    speciesId: owned.speciesId,
++    name: owned.nickname ?? sp.name,
++    ivs: owned.ivs,
++    stats,
++    currentHP: stats.maxHP,
++    cooldowns,
++    drumAttackBuff: false,
++    drumDefenseBuff: false,
++  };
++}
++
++export function createWildBattleMon(speciesId?: SpeciesId): BattleMon {
++  return createBattleMon(generateWildMon(speciesId));
++}
++
++// ── Damage formula ───────────────────────────────────────────
++
++function calcDamage(
++  power: number,
++  atk: number,
++  def: number,
++  atkBuff: boolean,
++  defBuff: boolean,
++): number {
++  const critRoll = Math.random() < 0.1;
++  const critMult = critRoll ? 1.5 : 1.0;
++  const atkMult = atkBuff ? 1.2 : 1.0;
++  const defMult = defBuff ? 1.2 : 1.0;
++  // defBuff means the defender has drummed → takes 1.2× damage (actually hurts more)
++  return Math.max(1, Math.round(power * (atk / 50) * (50 / def) * critMult * atkMult * defMult));
++}
++
++// ── Available moves ──────────────────────────────────────────
++
++export function availableMoves(mon: BattleMon): MoveId[] {
++  const sp = SPECIES[mon.speciesId];
++  return sp.moves.filter(mid => (mon.cooldowns[mid] ?? 0) === 0);
++}
++
++// ── CPU AI ───────────────────────────────────────────────────
++
++export function cpuPickMove(mon: BattleMon): MoveId {
++  const avail = availableMoves(mon);
++  // Weight: damage moves × 3, others × 1
++  const weighted: MoveId[] = [];
++  for (const mid of avail) {
++    const move = MOVES[mid];
++    const weight = move.power ? 3 : 1;
++    for (let i = 0; i < weight; i++) weighted.push(mid);
++  }
++  return weighted[Math.floor(Math.random() * weighted.length)];
++}
++
++// ── Cooldown tick ────────────────────────────────────────────
++
++function tickCooldowns(mon: BattleMon): void {
++  for (const mid in mon.cooldowns) {
++    if (mon.cooldowns[mid as MoveId] > 0) {
++      mon.cooldowns[mid as MoveId]--;
++    }
++  }
++}
++
++// ── Apply move usage cooldown ────────────────────────────────
++
++function applyUsageCooldown(mon: BattleMon, moveId: MoveId): void {
++  const move = MOVES[moveId];
++  mon.cooldowns[moveId] = move.baseCooldown;
++}
++
++// ── Turn resolution ──────────────────────────────────────────
++
++export function resolveTurn(state: BattleState): BattleState {
++  // Deep clone
++  const s: BattleState = JSON.parse(JSON.stringify(state));
++  const log: BattleLogEntry[] = [];
++
++  const p1 = s.p1Team[s.p1ActiveIndex];
++  const p2 = s.p2Team[s.p2ActiveIndex];
++  const m1id = s.p1SelectedMove!;
++  const m2id = s.p2SelectedMove!;
++  const m1 = MOVES[m1id];
++  const m2 = MOVES[m2id];
++
++  // Track dodge flags
++  const p1Dodging = m1id === 'kawasu';
++  const p2Dodging = m2id === 'kawasu';
++
++  // Apply usage cooldowns immediately
++  applyUsageCooldown(p1, m1id);
++  applyUsageCooldown(p2, m2id);
++
++  // ── Drumming ──
++  if (m1id === 'drumming') {
++    p1.drumAttackBuff = true;
++    p1.drumDefenseBuff = true;
++    log.push({ message: `${p1.name} はドラミングした！ 次の攻防が強化される。`, type: 'status' });
++  }
++  if (m2id === 'drumming') {
++    p2.drumAttackBuff = true;
++    p2.drumDefenseBuff = true;
++    log.push({ message: `${p2.name} はドラミングした！ 次の攻防が強化される。`, type: 'status' });
++  }
++
++  // ── しっけん self-debuff (take 1.1× this turn) ──
++  // Handled in damage calculation below via flag
++
++  // ── Damage phase: P1 attacks P2 ──
++  if (m1.power) {
++    const dodged = p2Dodging && !m1.guaranteed;
++    if (dodged) {
++      log.push({ message: `${p2.name} はかわした！`, type: 'miss' });
++    } else {
++      // p2 受け: drumDefenseBuff means p2 drummed → extra incoming
++      // shikken self: p2 used shikken so p2 takes 1.1× from p1
++      const atkEffective = p1.stats.atk;
++      let extraMult = 1.0;
++
++      if (m2id === 'shikken') extraMult *= 1.1; // p2 used shikken → p2 takes more
++
++      const dmg = Math.round(
++        calcDamage(m1.power, atkEffective, p2.stats.def, p1.drumAttackBuff, p2.drumDefenseBuff) * extraMult,
++      );
++
++      p1.drumAttackBuff = false; // consume buff
++      p2.drumDefenseBuff = false; // consume buff
++
++      p2.currentHP = Math.max(0, p2.currentHP - dmg);
++      log.push({ message: `${p1.name} の${m1.name}！ ${p2.name} に${dmg}ダメージ！`, type: 'damage' });
++    }
++  }
++
++  // ── Damage phase: P2 attacks P1 ──
++  if (m2.power) {
++    const dodged = p1Dodging && !m2.guaranteed;
++    if (dodged) {
++      log.push({ message: `${p1.name} はかわした！`, type: 'miss' });
++    } else {
++      let extraMult = 1.0;
++      if (m1id === 'shikken') extraMult *= 1.1; // p1 used shikken → p1 takes more
++
++      const dmg = Math.round(
++        calcDamage(m2.power, p2.stats.atk, p1.stats.def, p2.drumAttackBuff, p1.drumDefenseBuff) * extraMult,
++      );
++
++      p2.drumAttackBuff = false;
++      p1.drumDefenseBuff = false;
++
++      p1.currentHP = Math.max(0, p1.currentHP - dmg);
++      log.push({ message: `${p2.name} の${m2.name}！ ${p1.name} に${dmg}ダメージ！`, type: 'damage' });
++    }
++  }
++
++  // ── Kawasu log ──
++  if (m1id === 'kawasu' && !m2.power) {
++    log.push({ message: `${p1.name} はかわそうとしたが、攻撃がなかった。`, type: 'info' });
++  }
++  if (m2id === 'kawasu' && !m1.power) {
++    log.push({ message: `${p2.name} はかわそうとしたが、攻撃がなかった。`, type: 'info' });
++  }
++
++  // ── Tick cooldowns ──
++  tickCooldowns(p1);
++  tickCooldowns(p2);
++
++  // ── Backflip: subtract 1 from all own CDs (after normal tick) ──
++  if (m1id === 'backflip') {
++    log.push({ message: `${p1.name} はバックフリップ！ クールダウンが短縮！`, type: 'status' });
++    for (const mid in p1.cooldowns) {
++      if (p1.cooldowns[mid as MoveId] > 0) p1.cooldowns[mid as MoveId]--;
++    }
++  }
++  if (m2id === 'backflip') {
++    log.push({ message: `${p2.name} はバックフリップ！ クールダウンが短縮！`, type: 'status' });
++    for (const mid in p2.cooldowns) {
++      if (p2.cooldowns[mid as MoveId] > 0) p2.cooldowns[mid as MoveId]--;
++    }
++  }
++
++  s.log = log;
++  s.turn++;
++
++  // ── Faint check ──
++  const p1Fainted = p1.currentHP <= 0;
++  const p2Fainted = p2.currentHP <= 0;
++
++  // Check if any team has remaining Pokemon
++  const p1HasRemaining = s.p1Team.some((m, i) => i !== s.p1ActiveIndex && m.currentHP > 0);
++  const p2HasRemaining = s.p2Team.some((m, i) => i !== s.p2ActiveIndex && m.currentHP > 0);
++
++  if (p1Fainted && p2Fainted) {
++    // Both fainted simultaneously — check if anyone has backups
++    if (!p1HasRemaining && !p2HasRemaining) {
++      s.winner = 'p2'; // p2 wins on tie
++      s.phase = 'ended';
++    } else if (!p1HasRemaining) {
++      s.winner = 'p2';
++      s.phase = 'ended';
++    } else if (!p2HasRemaining) {
++      s.winner = 'p1';
++      s.phase = 'ended';
++    } else {
++      // Both have backups — p1 switches first
++      s.phase = 'p1-fainted';
++    }
++  } else if (p1Fainted) {
++    if (!p1HasRemaining) {
++      s.winner = 'p2';
++      s.phase = 'ended';
++    } else {
++      s.phase = 'p1-fainted';
++    }
++  } else if (p2Fainted) {
++    if (!p2HasRemaining) {
++      s.winner = 'p1';
++      s.phase = 'ended';
++    } else {
++      // Auto-switch CPU/p2 to next
++      const nextIdx = s.p2Team.findIndex((m, i) => i !== s.p2ActiveIndex && m.currentHP > 0);
++      if (nextIdx !== -1) {
++        s.p2ActiveIndex = nextIdx;
++        log.push({ message: `${s.p2Team[nextIdx].name} が登場！`, type: 'info' });
++      }
++      s.phase = 'resolving';
++    }
++  } else {
++    s.phase = 'resolving';
++  }
++
++  s.p1SelectedMove = null;
++  s.p2SelectedMove = null;
++
++  return s;
++}
++
++// ── Initial battle state builder ─────────────────────────────
++
++export function buildBattleState(
++  mode: 'quest' | 'pvp',
++  p1Team: OwnedPokemon[],
++  p2Team: OwnedPokemon[],
++): BattleState {
++  return {
++    mode,
++    turn: 1,
++    phase: 'p1-select',
++    p1Team: p1Team.map(createBattleMon),
++    p1ActiveIndex: 0,
++    p1SelectedMove: null,
++    p2Team: p2Team.map(createBattleMon),
++    p2ActiveIndex: 0,
++    p2SelectedMove: null,
++    log: [],
++    winner: null,
++  };
++}
+diff --git a/src/game/gameDb.ts b/src/game/gameDb.ts
+new file mode 100644
+index 0000000..afe0315
+--- /dev/null
++++ b/src/game/gameDb.ts
+@@ -0,0 +1,54 @@
++import Dexie, { type Table } from 'dexie';
++import type { OwnedPokemon, GameSave } from '@/game/types';
++import { randomIVs } from '@/game/species';
++
++// ── Database ─────────────────────────────────────────────────
++
++class PokemonGameDatabase extends Dexie {
++  ownedPokemon!: Table<OwnedPokemon, number>;
++  gameSave!: Table<GameSave, number>;
++
++  constructor() {
++    super('PokemonGameDB');
++    this.version(1).stores({
++      ownedPokemon: '++id, speciesId',
++      gameSave: 'id',
++    });
++  }
++}
++
++export const gameDb = new PokemonGameDatabase();
++
++// ── Helper functions ─────────────────────────────────────────
++
++export async function getGameSave(): Promise<GameSave> {
++  const save = await gameDb.gameSave.get(1);
++  if (save) return save;
++  const fresh: GameSave = { id: 1, team: [], questLastAttempt: 0 };
++  await gameDb.gameSave.put(fresh);
++  return fresh;
++}
++
++export async function saveTeam(team: number[]): Promise<void> {
++  const save = await getGameSave();
++  await gameDb.gameSave.put({ ...save, team });
++}
++
++export async function addPokemon(pokemon: Omit<OwnedPokemon, 'id'>): Promise<number> {
++  return (await gameDb.ownedPokemon.add(pokemon as OwnedPokemon)) as number;
++}
++
++export async function getAllPokemon(): Promise<OwnedPokemon[]> {
++  return gameDb.ownedPokemon.toArray();
++}
++
++export async function initNewPlayer(): Promise<void> {
++  const all = await getAllPokemon();
++  if (all.length === 0) {
++    const starterId = await addPokemon({
++      speciesId: 'chakun',
++      ivs: randomIVs(),
++    });
++    await saveTeam([starterId]);
++  }
++}
+diff --git a/src/game/moves.ts b/src/game/moves.ts
+new file mode 100644
+index 0000000..3dafc12
+--- /dev/null
++++ b/src/game/moves.ts
+@@ -0,0 +1,36 @@
++import type { Move, MoveId } from '@/game/types';
++
++export const MOVES: Record<MoveId, Move> = {
++  kawasu: {
++    id: 'kawasu',
++    name: 'かわす',
++    baseCooldown: 1,
++    description: 'この番の非確定攻撃を回避する。',
++  },
++  chakken: {
++    id: 'chakken',
++    name: 'ちゃっけん',
++    baseCooldown: 0,
++    power: 50,
++    description: '素早い一撃。毎ターン使える。',
++  },
++  drumming: {
++    id: 'drumming',
++    name: 'ドラミング',
++    baseCooldown: 1,
++    description: '次の攻撃と受けるダメージが1.2倍になる。',
++  },
++  shikken: {
++    id: 'shikken',
++    name: 'しっけん',
++    baseCooldown: 1,
++    power: 70,
++    description: '強力な一撃。このターン自分が受けるダメージ1.1倍。',
++  },
++  backflip: {
++    id: 'backflip',
++    name: 'バックフリップ',
++    baseCooldown: 2,
++    description: '自分の全クールダウンを1追加で短縮する。',
++  },
++};
+diff --git a/src/game/species.ts b/src/game/species.ts
+new file mode 100644
+index 0000000..ba04c8a
+--- /dev/null
++++ b/src/game/species.ts
+@@ -0,0 +1,50 @@
++import type { Species, SpeciesId, IVs, Stats, OwnedPokemon } from '@/game/types';
++
++export const SPECIES: Record<SpeciesId, Species> = {
++  chakun: {
++    id: 'chakun',
++    name: 'ちゃくん',
++    baseHP: 160,
++    baseATK: 50,
++    baseDEF: 60,
++    moves: ['kawasu', 'chakken', 'drumming'],
++    frontSprite: '/chakun.PNG',
++    backSprite: '/chakun_behind.PNG',
++  },
++  shikun: {
++    id: 'shikun',
++    name: 'しくん',
++    baseHP: 140,
++    baseATK: 65,
++    baseDEF: 45,
++    moves: ['kawasu', 'shikken', 'backflip'],
++    frontSprite: '/shikun.PNG',
++    backSprite: '/shikun_behind.PNG',
++  },
++};
++
++export function calcStats(speciesId: SpeciesId, ivs: IVs): Stats {
++  const sp = SPECIES[speciesId];
++  return {
++    maxHP: sp.baseHP + ivs.hp * 2,
++    atk: sp.baseATK + Math.floor(ivs.atk / 2),
++    def: sp.baseDEF + Math.floor(ivs.def / 2),
++  };
++}
++
++export function randomIVs(): IVs {
++  return {
++    hp: Math.floor(Math.random() * 32),
++    atk: Math.floor(Math.random() * 32),
++    def: Math.floor(Math.random() * 32),
++  };
++}
++
++export function generateWildMon(speciesId?: SpeciesId): OwnedPokemon {
++  const ids: SpeciesId[] = ['chakun', 'shikun'];
++  const sid = speciesId ?? ids[Math.floor(Math.random() * ids.length)];
++  return {
++    speciesId: sid,
++    ivs: randomIVs(),
++  };
++}
+diff --git a/src/game/types.ts b/src/game/types.ts
+new file mode 100644
+index 0000000..09aa156
+--- /dev/null
++++ b/src/game/types.ts
+@@ -0,0 +1,126 @@
++// ============================================================
++// Pokemon Battle Game – Core Types
++// ============================================================
++
++// ── Species ─────────────────────────────────────────────────
++
++export type SpeciesId = 'chakun' | 'shikun';
++
++export interface Species {
++  id: SpeciesId;
++  name: string;
++  baseHP: number;
++  baseATK: number;
++  baseDEF: number;
++  moves: MoveId[];
++  frontSprite: string;
++  backSprite: string;
++  backFlip?: boolean; // use scaleX(-1) for back sprite
++}
++
++// ── Moves ────────────────────────────────────────────────────
++
++export type MoveId =
++  | 'kawasu'
++  | 'chakken'
++  | 'drumming'
++  | 'shikken'
++  | 'backflip';
++
++export interface Move {
++  id: MoveId;
++  name: string;
++  baseCooldown: number; // turns to wait after use
++  power?: number;       // if undefined, not a damage move
++  guaranteed?: boolean; // true = cannot be dodged
++  description: string;
++}
++
++// ── Individual Values ────────────────────────────────────────
++
++export interface IVs {
++  hp: number;   // 0-31
++  atk: number;  // 0-31
++  def: number;  // 0-31
++}
++
++// ── Computed Stats ───────────────────────────────────────────
++
++export interface Stats {
++  maxHP: number;
++  atk: number;
++  def: number;
++}
++
++// ── Owned Pokemon (persisted) ────────────────────────────────
++
++export interface OwnedPokemon {
++  id?: number;
++  speciesId: SpeciesId;
++  nickname?: string;
++  ivs: IVs;
++}
++
++// ── Battle Mon (runtime) ─────────────────────────────────────
++
++export interface BattleMon {
++  ownedId?: number;     // undefined for wild/CPU
++  speciesId: SpeciesId;
++  name: string;
++  ivs: IVs;
++  stats: Stats;
++  currentHP: number;
++  cooldowns: Record<MoveId, number>;
++  // Drumming flags
++  drumAttackBuff: boolean;
++  drumDefenseBuff: boolean;
++}
++
++// ── Battle State ─────────────────────────────────────────────
++
++export type BattlePhase =
++  | 'p1-select'
++  | 'handoff'
++  | 'p2-select'
++  | 'resolving'
++  | 'p1-fainted'
++  | 'p2-fainted'
++  | 'ended';
++
++export type BattleMode = 'quest' | 'pvp';
++
++export interface BattleLogEntry {
++  message: string;
++  type: 'damage' | 'miss' | 'status' | 'info' | 'catch';
++}
++
++export interface BattleState {
++  mode: BattleMode;
++  turn: number;
++  phase: BattlePhase;
++
++  // Player 1
++  p1Team: BattleMon[];
++  p1ActiveIndex: number;
++  p1SelectedMove: MoveId | null;
++
++  // Player 2 / CPU
++  p2Team: BattleMon[];
++  p2ActiveIndex: number;
++  p2SelectedMove: MoveId | null;
++
++  log: BattleLogEntry[];
++  winner: 'p1' | 'p2' | null;
++
++  // Quest-specific
++  wildCaught?: boolean;
++  wildSpeciesId?: SpeciesId;
++}
++
++// ── Game Save ────────────────────────────────────────────────
++
++export interface GameSave {
++  id: 1;
++  team: number[];           // OwnedPokemon IDs (up to 3)
++  questLastAttempt: number; // timestamp
++}
+diff --git a/src/main.ts b/src/main.ts
+index db437b9..903a35a 100644
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -2,6 +2,7 @@ import Phaser from 'phaser';
+ import { BootScene } from './scenes/BootScene';
+ import { BattleScene } from './scenes/BattleScene';
+ import { setupMobile } from './mobile';
++import { mountTurnGame } from './turn-game';
+ 
+ setupMobile();
+ 
+@@ -33,4 +34,30 @@ const config: Phaser.Types.Core.GameConfig = {
+   scene: [BootScene, BattleScene],
+ };
+ 
+-new Phaser.Game(config);
++// Mode selector
++const modeSelect = document.getElementById('mode-select')!;
++const turnGameDiv = document.getElementById('turn-game')!;
++const gameDiv = document.getElementById('game')!;
++
++// Initially hide Phaser game div
++gameDiv.style.display = 'none';
++
++let phaserGame: Phaser.Game | null = null;
++
++document.getElementById('btn-turn')!.addEventListener('click', () => {
++  modeSelect.style.display = 'none';
++  turnGameDiv.style.display = 'block';
++  mountTurnGame(turnGameDiv, () => {
++    // onBack: return to mode select
++    turnGameDiv.style.display = 'none';
++    modeSelect.style.display = 'flex';
++  });
++});
++
++document.getElementById('btn-action')!.addEventListener('click', () => {
++  modeSelect.style.display = 'none';
++  gameDiv.style.display = 'flex';
++  if (!phaserGame) {
++    phaserGame = new Phaser.Game(config);
++  }
++});
+diff --git a/src/turn-game.tsx b/src/turn-game.tsx
+new file mode 100644
+index 0000000..5f35f6d
+--- /dev/null
++++ b/src/turn-game.tsx
+@@ -0,0 +1,9 @@
++import { createRoot } from 'react-dom/client';
++import './game.css';
++import GameApp from './components/GameApp';
++
++export function mountTurnGame(container: HTMLElement, onBack?: () => void) {
++  const root = createRoot(container);
++  root.render(<GameApp onBack={onBack} />);
++  return root;
++}
+diff --git a/tsconfig.json b/tsconfig.json
+index 1b3989b..a0f9fd4 100644
+--- a/tsconfig.json
++++ b/tsconfig.json
+@@ -14,7 +14,11 @@
+     "noUnusedLocals": true,
+     "noUnusedParameters": true,
+     "noFallthroughCasesInSwitch": true,
+-    "forceConsistentCasingInFileNames": true
++    "forceConsistentCasingInFileNames": true,
++    "jsx": "react-jsx",
++    "paths": {
++      "@/*": ["./src/*"]
++    }
+   },
+   "include": ["src"]
+ }
+diff --git a/vite.config.ts b/vite.config.ts
+index 31a9473..a54ed7b 100644
+--- a/vite.config.ts
++++ b/vite.config.ts
+@@ -1,5 +1,7 @@
+ import { defineConfig } from 'vite';
+ import { VitePWA } from 'vite-plugin-pwa';
++import react from '@vitejs/plugin-react';
++import path from 'path';
+ 
+ export default defineConfig({
+   base: '/',
+@@ -11,7 +13,13 @@ export default defineConfig({
+     target: 'es2020',
+     outDir: 'dist',
+   },
++  resolve: {
++    alias: {
++      '@': path.resolve(__dirname, 'src'),
++    },
++  },
+   plugins: [
++    react(),
+     VitePWA({
+       registerType: 'autoUpdate',
+       injectRegister: 'auto',
+-- 
+2.43.0
+
