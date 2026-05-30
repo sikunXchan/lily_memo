@@ -5,9 +5,10 @@ import { db, newSyncId } from '@/lib/db';
 import { useTheme } from './ThemeContext';
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import {
   Plus, Search, Palette, Sun, Moon, ChevronRight, FolderPlus,
-  Brush, Sparkles, FileText, Pencil, Trash2, List, Maximize2, X,
+  Brush, Sparkles, FileText, Pencil, Trash2, List, Maximize2, X, Gamepad2,
 } from 'lucide-react';
 import type { Note, Folder } from '@/lib/db';
 
@@ -175,6 +176,10 @@ export default function HomeHero({
             <div className="tile-header"><span className="tile-label">CONNECTION</span><ChevronRight size={13} className="tile-icon-faint" /></div>
             <div className="tile-cta"><Sparkles size={22} className="tile-cta-icon" /><span>つながりを見る</span></div>
           </div>
+          <Link href="/game" className="tile tile-action tile-game-link">
+            <div className="tile-header"><span className="tile-label">GAME</span><ChevronRight size={13} className="tile-icon-faint" /></div>
+            <div className="tile-cta"><Gamepad2 size={22} className="tile-cta-icon tile-game-icon" /><span>ポケバト！</span></div>
+          </Link>
         </div>
       ) : (
         /* ── Mobile: self-contained home with folder management ── */
@@ -189,6 +194,9 @@ export default function HomeHero({
             <button className="btn-new-folder" onClick={addFolder}>
               <FolderPlus size={15} /><span>新しいフォルダ</span>
             </button>
+            <Link href="/game" className="btn-game">
+              <Gamepad2 size={15} /><span>ゲーム</span>
+            </Link>
             <div className="view-toggle" role="tablist">
               <button role="tab" aria-selected={viewMode === 'tree'}
                 className={`vt-btn ${viewMode === 'tree' ? 'active' : ''}`} onClick={() => setViewMode('tree')}>
@@ -386,6 +394,11 @@ export default function HomeHero({
 
         .actions-row { display: flex; gap: 8px; margin: 0 12px 12px; flex-shrink: 0; }
         .btn-new-folder { display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: var(--primary-foreground, #fff); font-weight: 700; font-size: 0.8rem; border-radius: 10px; flex-shrink: 0; }
+        .btn-game { display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: linear-gradient(135deg, #302b63 0%, #7c3aed 100%); color: #fff; font-weight: 700; font-size: 0.8rem; border-radius: 10px; flex-shrink: 0; text-decoration: none; }
+        .btn-game:hover { opacity: 0.9; }
+        .tile-game-link { text-decoration: none; color: inherit; }
+        .tile-game-link:hover { background: var(--surface-deep, var(--muted)); }
+        .tile-game-icon { color: #7c3aed; }
         .view-toggle { display: flex; flex: 1; background: var(--surface-alt, var(--accent)); border-radius: 10px; padding: 3px; gap: 2px; }
         .vt-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 7px 8px; background: transparent; color: var(--foreground); font-size: 0.78rem; font-weight: 600; border-radius: 8px; opacity: 0.55; }
         .vt-btn.active { background: var(--card-bg, var(--background)); color: var(--primary); opacity: 1; box-shadow: var(--shadow-sm); }
