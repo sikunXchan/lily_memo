@@ -47,3 +47,6 @@ next-env.d.ts
 
 # pdfjs worker copied by postinstall (regenerated on every install)
 /public/pdf.worker.min.mjs
+
+# video editing workspace
+/video_edit/
