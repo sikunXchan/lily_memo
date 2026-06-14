@@ -68,7 +68,6 @@ const PRACTICE_SYSTEM_PROMPT = `あなたは「Lily」、学習アプリの問�
 - 指定された制限時間内で解ける分量にする。時間に対して問題が多すぎない・少なすぎないように調整する。
 - 分野を満遍なくカバーし、本番で問われる典型・頻出のポイントを押さえる。
 - 模試モードでないときは "points" は省略してよい。
-- **JSON構造は必ずフラット（入れ子禁止）**: questions 配列の中にさらに questions を入れてはいけない。"大問" はネストではなく、同じ passage を複数の問題で共有することで表現する。type は必ず "mcq" / "written" / "fill" / "tf" のいずれか。独自の type 名は作らない。
 
 # 問題の質（最重要 — 悪問を1問でも混ぜない）
 - **自己完結**: 各問は passage と prompt だけで問いとして成立すること。「資料の〜を参照」「教科書の図より」のように、解く人が見られないものを前提にしない。必要な前提・データはすべて問題文に書き込む
@@ -142,7 +141,6 @@ const PRACTICE_SYSTEM_PROMPT_EN = `You are "Lily", the problem-set generator AI 
 - Size the paper to be completable within the given time limit — not too many, not too few.
 - Cover the field broadly and hit the typical, frequently-tested points of a real exam.
 - Outside exam mode, "points" may be omitted.
-- **JSON structure must stay flat (no nesting)**: never put a "questions" array inside another question object. Represent 大問 by sharing the same passage string across consecutive questions. The type field must always be one of "mcq" / "written" / "fill" / "tf" — do not invent new type names.
 
 # Question quality (top priority — not a single bad question)
 - **Self-contained**: every question must stand on passage + prompt alone. Never reference material the solver cannot see ("according to the document", "as in the textbook figure"); embed all needed premises and data in the question itself.
@@ -305,25 +303,7 @@ export async function generateProblemSet(
       : '問題をうまく作れなかった…言い方を変えてもう一度試してね。');
   }
 
-  // Exam mode can cause models to emit nested 大問 containers instead of a flat
-  // questions array. Flatten one level: if an item has a nested questions /
-  // subquestions / problems array, pull those children up into the top level.
-  let rawQs: unknown[] = Array.isArray(parsed.questions) ? parsed.questions : [];
-  if (rawQs.length === 0) {
-    // Fallback: model put questions inside a different top-level key
-    for (const v of Object.values(parsed)) {
-      if (Array.isArray(v) && v.length > 0) { rawQs = v; break; }
-    }
-  }
-  rawQs = rawQs.flatMap((item: unknown) => {
-    if (item && typeof item === 'object' && !Array.isArray(item)) {
-      const obj = item as Record<string, unknown>;
-      for (const key of ['questions', 'subquestions', 'problems', '設問']) {
-        if (Array.isArray(obj[key])) return obj[key] as unknown[];
-      }
-    }
-    return [item];
-  });
+  const rawQs = Array.isArray(parsed.questions) ? parsed.questions : [];
   const questions = rawQs
     .map(q => normalizeQuestion(q as Record<string, unknown>))
     .filter((q): q is PracticeQuestion => q !== null);
